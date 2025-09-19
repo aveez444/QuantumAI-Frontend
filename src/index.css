@@ -1,0 +1,68 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+:root {
+  --bg-primary: #111827; /* gray-900 dark */
+  --bg-secondary: #1F2937; /* gray-800 dark */
+  --text-primary: #F9FAFB; /* gray-50 dark */
+  --accent-blue: #3B82F6;
+  --accent-purple: #8B5CF6;
+  --accent-green: #22C55E;
+}
+
+.dark {
+  --bg-primary: #111827;
+  --bg-secondary: #1F2937;
+  --text-primary: #F9FAFB;
+}
+
+html:not(.dark) { /* Light mode */
+  --bg-primary: #FFFFFF;
+  --bg-secondary: #F3F4F6; /* gray-100 */
+  --text-primary: #111827; /* gray-900 */
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+.card {
+  @apply bg-[var(--bg-secondary)] rounded-2xl shadow-xl border border-gray-700/30 dark:border-gray-300/30 p-6;
+}
+
+/* Neon glow for buttons */
+button.neon {
+  @apply relative bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg px-4 py-2 transition-all;
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.5), 0 0 20px rgba(139, 92, 246, 0.3);
+}
+button.neon:hover {
+  box-shadow: 0 0 15px rgba(59, 130, 246, 0.7), 0 0 25px rgba(139, 92, 246, 0.5);
+}
+
+/* React Datepicker Styles */
+.react-datepicker {
+  @apply bg-[var(--bg-secondary)] border border-gray-700/30 dark:border-gray-300/30 rounded-lg;
+}
+.react-datepicker__triangle {
+  @apply border-b-[var(--bg-secondary)];
+}
+.react-datepicker__header {
+  @apply bg-[var(--bg-secondary)] text-[var(--text-primary)];
+}
+.react-datepicker__day {
+  @apply text-[var(--text-primary)] hover:bg-blue-500/20;
+}
+.react-datepicker__day--selected {
+  @apply bg-gradient-to-r from-blue-500 to-purple-500 text-white;
+}
