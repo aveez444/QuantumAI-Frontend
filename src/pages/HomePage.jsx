@@ -20,21 +20,13 @@ import "swiper/css/autoplay";
 
 // Import your assets - assuming these exist in your project
 import BackgroundVideo from "../assets/Backgroundvideo.mp4";
-import OptimizeFinancial from "../assets/optimize-financial.jpg";
+
 import EnhanceOperations from "../assets/enhance-operations.jpg";
 import RevolutionizeCustomer from "../assets/revolutionize-customer.jpg";
 import PredictiveMaintenance from "../assets/predictive-maintenance.jpg";
-import AccelerateInnovation from "../assets/accelerate-innovation.jpg";
+
 import StrengthenCybersecurity from "../assets/strengthen-cybersecurity.jpg";
 
-// New imports for client interface screenshots
-import AiPoweredSalesPrediction from "../assets/ai-powered-sales-prediction.jpg";
-import BusinessCommandCenter from "../assets/business-command-center.jpg";
-import QuantumFinanceDashboard from "../assets/quantum-finance-dashboard.jpg";
-import MarketInsightsDashboard from "../assets/market-insights-dashboard.jpg";
-import FinanceSageDashboard from "../assets/finance-sage-dashboard.jpg";
-import InventoryShipmentDashboard from "../assets/inventory-shipment-dashboard.jpg";
-import Finance from "../assets/financeai.jpg";
 
 
 // Icons (you'll need to install react-icons: npm install react-icons)
