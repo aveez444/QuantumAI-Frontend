@@ -596,7 +596,7 @@ const Products = () => {
                       <option value="raw_material">Raw Material</option>
                       <option value="semi_finished">Semi-Finished</option>
                       <option value="finished_good">Finished Good</option>
-                      <option value="consumables">Consumables</option>
+                      <option value="consumable">Consumable</option>
                     </select>
                   </div>
                   
@@ -609,9 +609,9 @@ const Products = () => {
                     >
                       <option value="pcs">Pieces</option>
                       <option value="kg">Kilograms</option>
-                      <option value="m">Meters</option>
-                      <option value="l">Liters</option>
-                      <option value="set">Sets</option>
+                      <option value="mtr">Meters</option>     
+                      <option value="ltr">Liters</option>   
+                      <option value="set">Set</option>        
                     </select>
                   </div>
                 </div>
