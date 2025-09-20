@@ -100,7 +100,7 @@ const Products = () => {
 
   const handleDeleteProduct = async () => {
     try {
-      await api.delete(`products/${editingProduct.id}/`);
+      await api.delete(`api/products/${editingProduct.id}/`);
       setShowDeleteConfirm(false);
       setEditingProduct(null);
       fetchProducts();
