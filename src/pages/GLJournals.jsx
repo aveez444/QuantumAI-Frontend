@@ -78,19 +78,23 @@ const GLJournals = () => {
   const handleCreateJournal = async (e) => {
     e.preventDefault();
     try {
-      // Calculate totals
-      const totalDebit = formData.lines.reduce((sum, line) => 
-        sum + (parseFloat(line.debit_amount) || 0), 0);
-      const totalCredit = formData.lines.reduce((sum, line) => 
-        sum + (parseFloat(line.credit_amount) || 0), 0);
-
+      const sanitizedLines = formData.lines.map(line => ({
+        ...line,
+        debit_amount: line.debit_amount === '' ? 0 : parseFloat(line.debit_amount),
+        credit_amount: line.credit_amount === '' ? 0 : parseFloat(line.credit_amount),
+      }));
+  
+      const totalDebit = sanitizedLines.reduce((sum, line) => sum + (line.debit_amount || 0), 0);
+      const totalCredit = sanitizedLines.reduce((sum, line) => sum + (line.credit_amount || 0), 0);
+  
       const journalData = {
         ...formData,
+        lines: sanitizedLines,
         total_debit: totalDebit,
         total_credit: totalCredit,
-        status: 'draft'
+        status: 'draft',
       };
-
+  
       await api.post('api/gl-journals/', journalData);
       setShowJournalModal(false);
       resetForm();
@@ -99,24 +103,31 @@ const GLJournals = () => {
       console.error('Journal save error:', err);
     }
   };
+  
 
   const handleUpdateJournal = async (e) => {
     e.preventDefault();
     if (!editingJournal) return;
-    
+  
     try {
+      // Sanitize line amounts
+      const sanitizedLines = formData.lines.map(line => ({
+        ...line,
+        debit_amount: line.debit_amount === '' ? 0 : parseFloat(line.debit_amount),
+        credit_amount: line.credit_amount === '' ? 0 : parseFloat(line.credit_amount),
+      }));
+  
       // Calculate totals
-      const totalDebit = formData.lines.reduce((sum, line) => 
-        sum + (parseFloat(line.debit_amount) || 0), 0);
-      const totalCredit = formData.lines.reduce((sum, line) => 
-        sum + (parseFloat(line.credit_amount) || 0), 0);
-
+      const totalDebit = sanitizedLines.reduce((sum, line) => sum + (line.debit_amount || 0), 0);
+      const totalCredit = sanitizedLines.reduce((sum, line) => sum + (line.credit_amount || 0), 0);
+  
       const journalData = {
         ...formData,
+        lines: sanitizedLines,
         total_debit: totalDebit,
         total_credit: totalCredit,
       };
-
+  
       await api.patch(`api/gl-journals/${editingJournal.id}/`, journalData);
       setShowJournalModal(false);
       setEditingJournal(null);
@@ -126,6 +137,7 @@ const GLJournals = () => {
       console.error('Journal update error:', err);
     }
   };
+  
 
   const handlePostJournal = async (journalId) => {
     try {
