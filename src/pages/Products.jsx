@@ -69,7 +69,7 @@ const Products = () => {
       setFormData({
         sku: '',
         product_name: '',
-        product_type: 'finished_goods',
+        product_type: 'finished_good',
         uom: 'pcs',
         category: '',
         standard_cost: '',
@@ -595,7 +595,7 @@ const Products = () => {
                     >
                       <option value="raw_material">Raw Material</option>
                       <option value="semi_finished">Semi-Finished</option>
-                      <option value="finished_goods">Finished Goods</option>
+                      <option value="finished_good">Finished Good</option>
                       <option value="consumables">Consumables</option>
                     </select>
                   </div>
