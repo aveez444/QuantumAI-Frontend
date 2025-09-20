@@ -820,9 +820,10 @@ const Parties = () => {
                       type="text"
                       required
                       value={formData.legal_name}
-                      onChange={e => setFormData({...formData, legalname: e.target.value})}
-                        className="w-full bg-gray-800/50 border border-gray-700 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
-                      />
+                      onChange={e => setFormData({...formData, legal_name: e.target.value})}
+                      className="w-full bg-gray-800/50 border border-gray-700 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    />
+
                     </div>
                     
                     <div>
