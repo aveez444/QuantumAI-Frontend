@@ -75,6 +75,7 @@ const Sidebar = () => {
         { name: 'Valuation', path: '/inventory/valuation' },
         { name: 'Warehouses', path: '/inventory/warehouses' },
         { name: 'Parties', path: '/inventory/parties' },
+        { name: 'Stock Reports', path: '/inventory/stock-reports' },
       ],
     },
     {

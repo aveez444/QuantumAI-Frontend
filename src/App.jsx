@@ -22,6 +22,7 @@ import RequestSubscription from './pages/RequestSubscription';
 import Solutions from './pages/SolutionsPage';
 import AboutUs from './pages/AboutUs';
 import FeaturesPage from './pages/FeaturesPage';
+import StockReports from './pages/StockReports';
 
 function App() {
   return (
@@ -40,6 +41,7 @@ function App() {
         <Route path="/inventory/parties" element={<Parties />} />
         <Route path="/inventory/valuation" element={<InventoryValuation />} />
         <Route path="/inventory/reorder-suggestions" element={<ReorderSuggestions />} />
+        <Route path="/inventory/stock-reports" element={<StockReports />} />
 
         <Route path="/production/work-orders" element={<WorkOrders />} />
         <Route path="/production/entries" element={<ProductionEntries />} />
@@ -53,7 +55,6 @@ function App() {
 
         <Route path="/ai/query" element={<AIAssistant />} />
 
-       
         {/* Add more routes later, e.g., <Route path="/dashboard" element={<Dashboard />} /> */}
       </Routes>
     </Router>
