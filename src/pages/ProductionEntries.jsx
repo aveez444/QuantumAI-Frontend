@@ -419,16 +419,22 @@ const ProductionEntries = () => {
             </div>
           </div>
 
-          {/* Equipment Efficiency */}
-          {efficiencyData.length > 0 && (
-            <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 rounded-2xl border border-gray-700/50 backdrop-blur-xl p-6 mb-6">
-              <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
-                <Activity className="w-5 h-5 mr-2 text-purple-400" />
-                Equipment Efficiency (OEE)
-              </h3>
-              
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {efficiencyData.slice(0, 3).map((equipment, index) => (
+        {/* Equipment Efficiency */}
+        {efficiencyData.length > 0 && (
+          <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 rounded-2xl border border-gray-700/50 backdrop-blur-xl p-6 mb-6">
+            <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
+              <Activity className="w-5 h-5 mr-2 text-purple-400" />
+              Equipment Efficiency (OEE)
+            </h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {efficiencyData.slice(0, 3).map((equipment, index) => {
+                // Cap values at 100% for visualization
+                const availability = Math.min(equipment.availability, 100);
+                const performance = Math.min(equipment.performance, 100);
+                const quality = Math.min(equipment.quality, 100);
+                
+                return (
                   <motion.div 
                     key={index}
                     initial={{ opacity: 0, y: 20 }}
@@ -444,45 +450,72 @@ const ProductionEntries = () => {
                     </div>
                     
                     <div className="space-y-2">
+                      {/* Availability */}
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-300">Availability</span>
-                        <span className="text-white">{equipment.availability}%</span>
+                        <span className="text-white">
+                          {equipment.availability}%
+                          {equipment.availability > 100 && (
+                            <span className="text-amber-400 ml-1" title="Exceeds 100%">⚠</span>
+                          )}
+                        </span>
                       </div>
-                      <div className="w-full bg-gray-700 rounded-full h-1.5">
+                      <div className="w-full bg-gray-700 rounded-full h-1.5 relative overflow-hidden">
                         <div 
-                          className="bg-blue-500 h-1.5 rounded-full" 
-                          style={{ width: `${equipment.availability}%` }}
+                          className="bg-blue-500 h-1.5 rounded-full transition-all duration-300" 
+                          style={{ width: `${availability}%` }}
                         />
+                        {equipment.availability > 100 && (
+                          <div className="absolute inset-0 border border-amber-400 rounded-full" />
+                        )}
                       </div>
                       
+                      {/* Performance */}
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-300">Performance</span>
-                        <span className="text-white">{equipment.performance}%</span>
+                        <span className="text-white">
+                          {equipment.performance}%
+                          {equipment.performance > 100 && (
+                            <span className="text-amber-400 ml-1" title="Exceeds 100%">⚠</span>
+                          )}
+                        </span>
                       </div>
-                      <div className="w-full bg-gray-700 rounded-full h-1.5">
+                      <div className="w-full bg-gray-700 rounded-full h-1.5 relative overflow-hidden">
                         <div 
-                          className="bg-purple-500 h-1.5 rounded-full" 
-                          style={{ width: `${equipment.performance}%` }}
+                          className="bg-purple-500 h-1.5 rounded-full transition-all duration-300" 
+                          style={{ width: `${performance}%` }}
                         />
+                        {equipment.performance > 100 && (
+                          <div className="absolute inset-0 border border-amber-400 rounded-full" />
+                        )}
                       </div>
                       
+                      {/* Quality */}
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-300">Quality</span>
-                        <span className="text-white">{equipment.quality}%</span>
+                        <span className="text-white">
+                          {equipment.quality}%
+                          {equipment.quality > 100 && (
+                            <span className="text-amber-400 ml-1" title="Exceeds 100%">⚠</span>
+                          )}
+                        </span>
                       </div>
-                      <div className="w-full bg-gray-700 rounded-full h-1.5">
+                      <div className="w-full bg-gray-700 rounded-full h-1.5 relative overflow-hidden">
                         <div 
-                          className="bg-emerald-500 h-1.5 rounded-full" 
-                          style={{ width: `${equipment.quality}%` }}
+                          className="bg-emerald-500 h-1.5 rounded-full transition-all duration-300" 
+                          style={{ width: `${quality}%` }}
                         />
+                        {equipment.quality > 100 && (
+                          <div className="absolute inset-0 border border-amber-400 rounded-full" />
+                        )}
                       </div>
                     </div>
                   </motion.div>
-                ))}
-              </div>
+                );
+              })}
             </div>
-          )}
-
+          </div>
+        )}
           {/* Filters and Controls */}
           <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 rounded-2xl border border-gray-700/50 backdrop-blur-xl p-6 mb-6">
             <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
@@ -670,24 +703,27 @@ const ProductionEntries = () => {
                               </div>
                             </div>
                           </td>
-                            <td className="py-3 px-4">
-                              <div className="flex flex-col">
-                                <div className="flex items-center space-x-2">
-                                  <div className="text-emerald-400 font-medium">{entry.quantity_produced}</div>
-                                  <div className="text-xs text-gray-500">|</div>
-                                  <div className="text-red-400 text-sm">{entry.quantity_rejected || 0}</div>
-                                </div>
-                                <div className="w-full bg-gray-700 rounded-full h-1.5 mt-1">
-                                  <div 
-                                    className="h-1.5 rounded-full bg-gradient-to-r from-emerald-500 to-red-500" 
-                                    style={{ 
-                                      width: `${(entry.quantity_produced / totalOutput) * 100}%`,
-                                      background: `linear-gradient(90deg, #10b981 ${(entry.quantity_produced / totalOutput) * 100}%, #ef4444 0%)`
-                                    }}
-                                  />
-                                </div>
+                          <td className="py-3 px-4">
+                            <div className="flex flex-col">
+                              <div className="flex items-center space-x-2">
+                                <div className="text-emerald-400 font-medium">{entry.quantity_produced}</div>
+                                <div className="text-xs text-gray-500">|</div>
+                                <div className="text-red-400 text-sm">{entry.quantity_rejected || 0}</div>
                               </div>
-                            </td>
+                              <div className="w-full bg-gray-700 rounded-full h-1.5 mt-1 relative overflow-hidden">
+                                <div 
+                                  className="h-1.5 rounded-full transition-all duration-300" 
+                                  style={{ 
+                                    width: `${Math.min((entry.quantity_produced / totalOutput) * 100, 100)}%`,
+                                    background: `linear-gradient(90deg, #10b981 ${Math.min((entry.quantity_produced / totalOutput) * 100, 100)}%, #ef4444 0%)`
+                                  }}
+                                />
+                                {(entry.quantity_produced / totalOutput) * 100 > 100 && (
+                                  <div className="absolute inset-0 border border-amber-400 rounded-full" />
+                                )}
+                              </div>
+                            </div>
+                          </td>
                             <td className="py-3 px-4">
                               <div className="flex items-center">
                                 <div className={`text-xs font-medium px-2 py-1 rounded-full ${getEfficiencyColor(efficiency)} bg-gray-800/50`}>
