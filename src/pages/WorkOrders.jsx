@@ -61,7 +61,11 @@ const WorkOrders = () => {
     try {
       // Fetch work orders
       const workOrdersRes = await api.get('api/work-orders/');
-      setWorkOrders(workOrdersRes.data.results || workOrdersRes.data);
+      const workOrdersData = workOrdersRes.data.results || workOrdersRes.data || [];
+      
+      // Filter out any invalid work orders
+      const validWorkOrders = workOrdersData.filter(wo => wo && wo.id);
+      setWorkOrders(validWorkOrders);
       
       // Fetch dashboard summary
       const dashboardRes = await api.get('api/work-orders/dashboard_summary/');
@@ -101,7 +105,7 @@ const WorkOrders = () => {
 
   useEffect(() => {
     // Apply filters whenever filters or workOrders change
-    let filtered = workOrders;
+    let filtered = workOrders.filter(wo => wo && wo.id); // Filter out invalid work orders
     
     // Status filter
     if (statusFilter !== 'all') {
@@ -183,6 +187,13 @@ const WorkOrders = () => {
 
 
   const handleStatusChange = async (workOrderId, actionType, opts = {}) => {
+    // Validate workOrderId
+    if (!workOrderId || workOrderId === 'undefined') {
+      console.error('Invalid work order ID:', workOrderId);
+      alert('Invalid work order ID. Please refresh the page and try again.');
+      return false;
+    }
+  
     /**
      * actionType: one of:
      *  - 'release'           -> POST /api/work-orders/{id}/release/
@@ -190,21 +201,24 @@ const WorkOrders = () => {
      *  - 'complete'          -> POST /api/work-orders/{id}/complete_production/
      *  - 'cancel'            -> POST /api/work-orders/{id}/cancel/
      *  - 'patch_status'      -> PATCH /api/work-orders/{id}/  with { status: opts.status }
-     *
-     * opts: optional payload (e.g. final_quantity_completed)
      */
     try {
       let endpoint = '';
       let method = 'post';
       let data = {};
-
+  
+      // Validate endpoint construction
+      if (!workOrderId) {
+        throw new Error('Work order ID is required');
+      }
+  
       if (actionType === 'release') {
         endpoint = `api/work-orders/${workOrderId}/release/`;
       } else if (actionType === 'start') {
         endpoint = `api/work-orders/${workOrderId}/start_production/`;
       } else if (actionType === 'complete') {
         endpoint = `api/work-orders/${workOrderId}/complete_production/`;
-        // include optional final qty if provided, otherwise backend will use aggregated value or 0
+        // include optional final qty if provided
         if (typeof opts.final_quantity_completed !== 'undefined') {
           data = { final_quantity_completed: opts.final_quantity_completed };
         }
@@ -219,8 +233,10 @@ const WorkOrders = () => {
         console.warn('Unknown actionType', actionType);
         return false;
       }
-
-      // Confirm dangerous actions (start/complete/cancel) with the user
+  
+      console.log('Making API call to:', endpoint, 'with data:', data);
+  
+      // Confirm dangerous actions with the user
       if (['start', 'complete', 'cancel'].includes(actionType)) {
         const confirmMsg = actionType === 'start'
           ? 'Start production for this work order?'
@@ -229,51 +245,54 @@ const WorkOrders = () => {
             : 'Cancel this work order? This will set status to cancelled and prevent further entries.';
         if (!window.confirm(confirmMsg)) return false;
       }
-
+  
       const response = method === 'post'
         ? await api.post(endpoint, data)
         : await api.patch(endpoint, data);
-
-      // Update local list state by re-fetching the single work order data if backend returned updated object
-      // Some endpoints return partial response; to be safe, fetch the updated WO from API
-      try {
-        const updatedRes = await api.get(`api/work-orders/${workOrderId}/`);
-        const updatedWo = updatedRes.data;
-        if (response.data) {
-          setWorkOrders(prev => prev.map(wo => (wo.id === workOrderId ? response.data : wo)));
+  
+      // Update local state with the response data
+      if (response.data) {
+        setWorkOrders(prev => prev.map(wo => (wo.id === workOrderId ? response.data : wo)));
+        
+        // If this is the currently selected work order, update it too
         if (selectedWorkOrder && selectedWorkOrder.id === workOrderId) {
-          // also re-fetch detail to get fresh production entries, etc.
-          fetchWorkOrderDetails(workOrderId);
-          setSelectedWorkOrder(updatedWo);
+          setSelectedWorkOrder(response.data);
         }
-      }
-      } catch (err) {
-        // fallback: optimistic update based on action
-        setWorkOrders(prev => prev.map(wo => {
-          if (wo.id !== workOrderId) return wo;
-          if (actionType === 'release') return { ...wo, status: 'released' };
-          if (actionType === 'start') return { ...wo, status: 'in_progress' };
-          if (actionType === 'complete') return { ...wo, status: 'completed', quantity_completed: opts.final_quantity_completed ?? wo.quantity_completed };
-          if (actionType === 'cancel') return { ...wo, status: 'cancelled' };
-          if (actionType === 'patch_status') return { ...wo, status: opts.status };
-          return wo;
-        }));
-        if (selectedWorkOrder && selectedWorkOrder.id === workOrderId) {
-          setSelectedWorkOrder(prev => ({
-            ...prev,
-            status: actionType === 'release' ? 'released' : actionType === 'start' ? 'in_progress' : actionType === 'complete' ? 'completed' : actionType === 'cancel' ? 'cancelled' : prev.status
-          }));
+        
+        // Close the detail modal if action was successful
+        if (['complete', 'cancel'].includes(actionType)) {
+          setShowDetailModal(false);
         }
+        
+        // Refresh the data to ensure consistency
+        setTimeout(() => {
+          fetchData();
+        }, 500);
+        
+        return true;
       }
-
+      
       return true;
+  
     } catch (err) {
       console.error('Failed to update work order status:', err);
-      alert((err.response && err.response.data && err.response.data.error) || 'Failed to perform action. Check console.');
+      
+      // More specific error handling
+      if (err.response) {
+        if (err.response.status === 404) {
+          alert('Work order not found. It may have been deleted or you may need to refresh the page.');
+        } else if (err.response.status === 400) {
+          alert(err.response.data.error || 'Invalid action for current work order status.');
+        } else {
+          alert(err.response.data.error || 'Failed to perform action. Please try again.');
+        }
+      } else {
+        alert('Network error. Please check your connection and try again.');
+      }
+      
       return false;
     }
   };
-
   const handleCreateWorkOrder = async (e) => {
     e.preventDefault();
     
@@ -770,26 +789,37 @@ const WorkOrders = () => {
                               )}
 
                               {/* Released -> Start */}
-                              {workOrder.status === 'released' && (
-                                <>
-                                  <button
-                                    onClick={() => handleStatusChange(workOrder.id, 'start')}
-                                    className="p-1.5 bg-blue-500/10 hover:bg-blue-500/20 rounded-lg transition-colors"
-                                    title="Start Production"
-                                  >
-                                    <Play className="w-4 h-4 text-blue-400" />
-                                  </button>
+                              {workOrder.status === 'released' && workOrder.id && (
+                                  <>
+                                    <button
+                                      onClick={() => {
+                                        if (!workOrder.id) {
+                                          alert('Work order ID is missing. Please refresh the page.');
+                                          return;
+                                        }
+                                        handleStatusChange(workOrder.id, 'start');
+                                      }}
+                                      className="p-1.5 bg-blue-500/10 hover:bg-blue-500/20 rounded-lg transition-colors"
+                                      title="Start Production"
+                                    >
+                                      <Play className="w-4 h-4 text-blue-400" />
+                                    </button>
 
-                                  <button
-                                    onClick={() => handleStatusChange(workOrder.id, 'cancel')}
-                                    className="p-1.5 bg-red-500/10 hover:bg-red-500/20 rounded-lg transition-colors"
-                                    title="Cancel Work Order"
-                                  >
-                                    <Trash2 className="w-4 h-4 text-red-400" />
-                                  </button>
-                                </>
-                              )}
-
+                                    <button
+                                      onClick={() => {
+                                        if (!workOrder.id) {
+                                          alert('Work order ID is missing. Please refresh the page.');
+                                          return;
+                                        }
+                                        handleStatusChange(workOrder.id, 'cancel');
+                                      }}
+                                      className="p-1.5 bg-red-500/10 hover:bg-red-500/20 rounded-lg transition-colors"
+                                      title="Cancel Work Order"
+                                    >
+                                      <Trash2 className="w-4 h-4 text-red-400" />
+                                    </button>
+                                  </>
+                                )}
                               {/* In Progress -> Complete / Cancel */}
                               {workOrder.status === 'in_progress' && (
                                 <>
@@ -857,7 +887,7 @@ const WorkOrders = () => {
                         <div className="w-full bg-gray-700 rounded-full h-1.5 mt-2">
                         <div 
                           className="h-1.5 rounded-full bg-gradient-to-r from-blue-500 to-purple-500" 
-                          style={{ width: `${Math.min(selectedWorkOrder?.completion_percentage ?? 0, 100)}%` }}
+                          style={{ width: `${percentage}%` }}
                         />
 
                       </div>
