@@ -338,45 +338,57 @@ const Movements = () => {
   }, [movements]);
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white ">
-      {/* Header */}
-
-      <div className="flex flex-col md:flex-row md:items-center justify-between mb-6">
-        
-        <div>
-          <h1 className="text-2xl font-bold text-white">Inventory Movements</h1>
-          <p className="text-gray-400">Track all stock movements and transfers</p>
-        </div>
-        <div className="flex space-x-3 mt-4 md:mt-0">
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => setShowFilters(!showFilters)}
-            className="flex items-center px-4 py-2 border border-gray-700 rounded-lg bg-gray-800 text-gray-300 hover:bg-gray-700 transition-colors"
-          >
-            <FiFilter className="mr-2" />
-            Filters
-          </motion.button>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => setShowTransferModal(true)}
-            className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            <FiRefreshCw className="mr-2" />
-            Transfer Stock
-          </motion.button>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => setShowMovementModal(true)}
-            className="flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-          >
-            <FiPlus className="mr-2" />
-            New Movement
-          </motion.button>
+    <div className="min-h-screen bg-gray-900 text-white flex">
+    <Sidebar />
+    <div className="flex-1 flex flex-col">
+      {/* Sticky Header (matches InventoryValuation style) */}
+      <div className="sticky top-0 z-30 bg-gray-900/80 backdrop-blur-xl border-b border-gray-800">
+        <div className="flex items-center justify-between p-6">
+          <div>
+            <motion.h1
+              initial={{ opacity: 0, y: -12 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-2xl md:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400"
+            >
+              Inventory Movements
+            </motion.h1>
+            <p className="text-gray-400 mt-1">Track all stock movements and transfers</p>
+          </div>
+  
+          <div className="flex space-x-3">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setShowFilters(!showFilters)}
+              className="flex items-center px-4 py-2 border border-gray-700 rounded-lg bg-gray-800 text-gray-300 hover:bg-gray-700 transition-colors"
+            >
+              <FiFilter className="mr-2" />
+              Filters
+            </motion.button>
+  
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setShowTransferModal(true)}
+              className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              <FiRefreshCw className="mr-2" />
+              Transfer Stock
+            </motion.button>
+  
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setShowMovementModal(true)}
+              className="flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+            >
+              <FiPlus className="mr-2" />
+              New Movement
+            </motion.button>
+          </div>
         </div>
       </div>
+   
 
       {/* Filters Panel */}
       <AnimatePresence>
@@ -940,8 +952,10 @@ const Movements = () => {
               </form>
             </motion.div>
           </div>
+          
         )}
       </AnimatePresence>
+    </div>
     </div>
   );
 };

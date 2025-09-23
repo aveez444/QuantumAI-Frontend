@@ -251,7 +251,7 @@ const HomePage = () => {
       to={to}
       className={`group relative px-8 py-4 bg-transparent overflow-hidden rounded-lg font-semibold text-lg inline-block ${className}`}
     >
-      <span className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600 transition-all duration-300 transform group-hover:scale-105"></span>
+      <span className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600 transition-all duration-300 transform group-hover:scale-105 active:scale-95"></span>
       <span className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-fuchsia-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
       <span className="relative text-white z-10">{children}</span>
     </Link>
@@ -290,21 +290,21 @@ const HomePage = () => {
         </motion.video>
 
         {/* Hero Content */}
-        <div className="relative z-20 max-w-7xl mx-auto px-6 text-center">
+        <div className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <motion.div
             initial={{ opacity: 0, y: -50 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1.2, ease: "easeOut" }}
-            className="relative z-20 max-w-7xl mx-auto px-6"
+            className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"
           >
-            <h1 className="text-6xl md:text-7xl font-extrabold leading-tight bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-500">
+          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold leading-tight bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-500">
               Welcome to QuantumFinance AI <br></br>
             </h1>
             <motion.h2
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 1, delay: 0.5, ease: "easeOut" }}
-              className="text-4xl md:text-6xl font-bold mt-4 bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-purple-400 to-fuchsia-500"
+              className="text-2xl sm:text-3xl md:text-4xl lg:text-6xl font-bold mt-4 bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-purple-400 to-fuchsia-500"
             >
               Redefined Enterprise and Resource Management <br></br><br></br>
             </motion.h2> 
@@ -312,7 +312,7 @@ const HomePage = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 1, delay: 1, ease: "easeOut" }}
-              className="mt-6 text-xl md:text-2xl max-w-3xl mx-auto text-gray-300 leading-relaxed"
+              className="mt-6 text-base sm:text-lg md:text-xl lg:text-2xl max-w-3xl mx-auto text-gray-300 leading-relaxed px-4"
             >
               Harness the power of artificial intelligence to transform your financial operations,
               automate critical decisions, and achieve unprecedented business growth.
@@ -361,14 +361,14 @@ const HomePage = () => {
       {/* What We Offer - Stats Section */}
       <section className="relative py-20 bg-gradient-to-b from-gray-950 to-black">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(67,56,202,0.15),transparent_70%)]"></div>
-        <div className="max-w-7xl mx-auto px-6 relative z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={isVisible['stats'] ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.8 }}
             data-section="stats"
             id="stats"
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8"
+            className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 md:gap-8"
           >
             {[
               { value: "98%", label: "Accuracy in Financial Predictions", icon: "📈" },
@@ -414,14 +414,14 @@ const HomePage = () => {
             </p>
           </motion.div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8 px-4 sm:px-0">
             {features.map((feature, index) => (
               <motion.div
                 key={index}
                 initial={{ opacity: 0, y: 30 }}
                 animate={isVisible['features'] ? { opacity: 1, y: 0 } : {}}
                 transition={{ duration: 0.6, delay: index * 0.1 }}
-                className="p-8 rounded-2xl bg-gradient-to-b from-gray-900 to-gray-950 border border-gray-800 hover:border-purple-500/50 group transition-all duration-500 hover:shadow-[0_0_30px_rgba(168,85,247,0.2)] transform hover:-translate-y-2"
+                className="p-4 sm:p-6 md:p-8 rounded-2xl bg-gradient-to-b from-gray-900 to-gray-950 border border-gray-800 hover:border-purple-500/50 group transition-all duration-500 hover:shadow-[0_0_30px_rgba(168,85,247,0.2)] transform hover:-translate-y-1 md:hover:-translate-y-2"
               >
                 <div className="mb-6">{feature.icon}</div>
                 <h3 className="text-2xl font-bold text-white mb-4 group-hover:bg-clip-text group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:from-blue-400 group-hover:to-purple-500 transition-all duration-300">{feature.title}</h3>
@@ -440,7 +440,7 @@ const HomePage = () => {
       >
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiMyYTJhMmEiIGZpbGwtb3BhY2l0eT0iMC40Ij48cGF0aCBkPSJNMzYgMzRjMC0yLjItMS44LTQtNC00cy00IDEuOC00IDQgMS44IDQgNCA0IDQtMS44IDQtNHoiLz48L2c+PC9nPjwvc3ZnPg==')] opacity-10"></div>
         
-        <div className="max-w-7xl mx-auto px-6 relative z-10">
+        <div className=" max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={isVisible['advantages'] ? { opacity: 1, y: 0 } : {}}
@@ -459,10 +459,18 @@ const HomePage = () => {
           </motion.div>
           
           <Swiper
-            effect="coverflow"
-            grabCursor={true}
-            centeredSlides={true}
-            slidesPerView={"auto"}
+              effect="coverflow"
+              grabCursor={true}
+              centeredSlides={true}
+              slidesPerView={1}
+              breakpoints={{
+                640: {
+                  slidesPerView: 1,
+                },
+                768: {
+                  slidesPerView: "auto",
+                },
+              }}
             coverflowEffect={{
               rotate: 50,
               stretch: 0,
@@ -480,7 +488,7 @@ const HomePage = () => {
           >
             {advantages.map((item, index) => (
               <SwiperSlide key={index} className="max-w-md my-10">
-                <div className={`p-10 h-96 rounded-2xl bg-gradient-to-br ${item.gradient} shadow-xl flex flex-col justify-center items-center text-center transform transition-transform duration-500 hover:scale-105`}>
+                <div className={`p-10 h-96 rounded-2xl bg-gradient-to-br ${item.gradient} shadow-xl flex flex-col justify-center items-center text-center transform transition-transform duration-500 hover:scale-105 active:scale-95`}>
                   {item.icon}
                   <h3 className="text-2xl font-bold text-white mb-4">{item.title}</h3>
                   <p className="text-white/90">{item.desc}</p>
@@ -494,7 +502,7 @@ const HomePage = () => {
       {/* Radial gradient background */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(79,70,229,0.1),transparent_70%)]"></div>
 
-      <div className="max-w-7xl mx-auto px-6 relative z-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
@@ -524,7 +532,7 @@ const HomePage = () => {
               key={index}
               style={{ rotateY }}
               whileHover={{ scale: 1.1, zIndex: 10 }}
-              className="flex-shrink-0 w-80 h-96 bg-gradient-to-br from-gray-900 to-gray-800 rounded-3xl p-8 relative overflow-hidden group"
+              className="flex-shrink-0 w-64 sm:w-72 md:w-80 h-80 sm:h-88 md:h-96 bg-gradient-to-br from-gray-900 to-gray-800 rounded-3xl p-4 sm:p-6 md:p-8 relative overflow-hidden group"
             >
               {/* Gradient overlay */}
               <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-purple-600/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
@@ -621,7 +629,7 @@ const HomePage = () => {
          style={{ animationDuration: '20s' }}></div>
   </div>
 
-  <div className="max-w-7xl mx-auto px-6 relative z-10">
+  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
     <motion.div
       initial={{ opacity: 0, y: 30 }}
       animate={isVisible['solutions'] ? { opacity: 1, y: 0 } : {}}
@@ -640,7 +648,7 @@ const HomePage = () => {
     </motion.div>
     
     {/* Grid Layout with Unique Hover Effects */}
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8 md:gap-12">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 lg:gap-12 px-4 sm:px-0">
       {solutions.map((solution, index) => (
         <motion.div
           key={index}
@@ -650,7 +658,7 @@ const HomePage = () => {
             y: 0,
             transition: { duration: 0.5, delay: index * 0.1 }
           } : {}}
-          className="relative group h-96 overflow-hidden rounded-xl shadow-2xl transform transition-transform duration-300 hover:scale-[1.02]"
+          className="relative group h-64 sm:h-72 md:h-80 lg:h-96 overflow-hidden rounded-xl shadow-2xl transform transition-transform duration-300 hover:scale-[1.02]"
           whileHover={{ scale: 1.02 }} // Slight zoom on hover
         >
           {/* Background Image with Gradient Overlay */}
@@ -742,7 +750,7 @@ const HomePage = () => {
     </motion.div>
     
     {/* Process Automation Showcase */}
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center mb-20">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-center mb-12 md:mb-20">
       <motion.div
         initial={{ opacity: 0, x: -50 }}
         animate={isVisible['workflow-automation'] ? { opacity: 1, x: 0 } : {}}
@@ -883,7 +891,7 @@ const HomePage = () => {
     </svg>
   </div>
   
-  <div className="max-w-7xl mx-auto px-6 relative z-10">
+  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
     <motion.div
       initial={{ opacity: 0, y: 30 }}
       animate={isVisible['testimonials'] ? { opacity: 1, y: 0 } : {}}
@@ -908,8 +916,8 @@ const HomePage = () => {
       autoplay={{ delay: 5000, disableOnInteraction: false }}
       breakpoints={{
         640: { slidesPerView: 1 },
-        768: { slidesPerView: 2 },
-        1024: { slidesPerView: 3 },
+        768: { slidesPerView: 2, spaceBetween: 20 },
+        1024: { slidesPerView: 3, spaceBetween: 30 },
       }}
       modules={[Pagination, Autoplay]}
       className="testimonial-swiper"
@@ -1028,14 +1036,14 @@ const HomePage = () => {
     <div className="absolute inset-0 bg-grid-pattern opacity-20"></div>
   </div>
   
-  <div className="max-w-7xl mx-auto px-6 relative z-10">
+  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
     <div className="bg-gradient-to-br from-gray-900/80 to-gray-950/80 backdrop-blur-md rounded-3xl border border-indigo-500/30 p-10 md:p-16 shadow-[0_0_50px_rgba(79,70,229,0.3)]">
-      <div className="flex flex-col md:flex-row items-center">
+      <div className="flex flex-col lg:flex-row items-center">
         <motion.div 
           initial={{ opacity: 0, x: -50 }}
           animate={isVisible['cta'] ? { opacity: 1, x: 0 } : {}}
           transition={{ duration: 0.8 }}
-          className="md:w-3/5 mb-10 md:mb-0 md:pr-10"
+          className="lg:w-3/5 mb-10 lg:mb-0 lg:pr-10 text-center lg:text-left"
         >
           <h2 className="text-4xl md:text-5xl font-bold mb-6">
             <span className="block bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-purple-400 to-indigo-400">
@@ -1068,7 +1076,7 @@ const HomePage = () => {
           initial={{ opacity: 0, scale: 0.9 }}
           animate={isVisible['cta'] ? { opacity: 1, scale: 1 } : {}}
           transition={{ duration: 0.8, delay: 0.2 }}
-          className="md:w-2/5"
+          className="lg:w-2/5 w-full max-w-md mx-auto lg:mx-0"
         >
           <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 rounded-xl p-6 border border-gray-700 shadow-lg">
             <h3 className="text-2xl font-bold text-white mb-6 text-center">

@@ -260,7 +260,7 @@ const BusinessDashboard = () => {
       <motion.button
         whileHover={{ scale: 1.02 }}
         onClick={() => setShowDatePicker(!showDatePicker)}
-        className="flex items-center space-x-2 bg-gray-800/50 border border-gray-700 rounded-xl px-4 py-2 text-sm hover:bg-gray-700/50 transition-colors"
+        className="flex items-center space-x-2 bg-gray-800/50 border border-gray-700 rounded-xl px-3 py-2 text-xs sm:text-sm hover:bg-gray-700/50 transition-colors w-full sm:w-auto justify-center active:scale-95"
       >
         <Calendar className="w-4 h-4" />
         <span>{formatDate(dateRange.start_date)} - {formatDate(dateRange.end_date)}</span>
@@ -273,14 +273,14 @@ const BusinessDashboard = () => {
             initial={{ opacity: 0, y: -10, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -10, scale: 0.95 }}
-            className="absolute top-full mt-2 right-0 bg-gray-800 border border-gray-700 rounded-xl p-4 shadow-2xl z-50 min-w-80"
+            className="absolute top-full mt-2 right-0 bg-gray-800 border border-gray-700 rounded-xl p-4 shadow-2xl z-50 min-w-80 sm:min-w-96"
           >
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4 text-sm sm:text-base">
               <div className="flex items-center justify-between">
                 <h4 className="font-medium text-white">Select Date Range</h4>
                 <button
                   onClick={() => setShowDatePicker(false)}
-                  className="text-gray-400 hover:text-white"
+                  className="text-gray-400 text-sm sm:text-base hover:text-white"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -288,7 +288,7 @@ const BusinessDashboard = () => {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm text-gray-400 mb-1">Start Date</label>
+                  <label className="block text-sm text-gray-400 text-sm sm:text-base mb-1">Start Date</label>
                   <input
                     type="date"
                     value={dateRange.start_date}
@@ -297,7 +297,7 @@ const BusinessDashboard = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm text-gray-400 mb-1">End Date</label>
+                  <label className="block text-sm text-gray-400 text-sm sm:text-base mb-1">End Date</label>
                   <input
                     type="date"
                     value={dateRange.end_date}
@@ -355,7 +355,7 @@ const BusinessDashboard = () => {
   const KPICard = ({ title, value, subtitle, icon: Icon, trend, color, onClick, loading: cardLoading }) => (
     <motion.div
       whileHover={{ scale: 1.02, y: -4 }}
-      className={`relative overflow-hidden rounded-3xl bg-gradient-to-br ${color} p-6 cursor-pointer group shadow-2xl`}
+      className={`relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-br ${color} p-4 sm:p-6 cursor-pointer group shadow-2xl`}
       onClick={onClick}
     >
       <div className="absolute inset-0 bg-black/10 group-hover:bg-black/5 transition-colors" />
@@ -378,7 +378,7 @@ const BusinessDashboard = () => {
           </div>
         ) : (
           <>
-            <h3 className="text-3xl font-bold text-white mb-2">{value}</h3>
+            <h3 className="text-2xl sm:text-3xl font-bold text-white mb-2">{value}</h3>
             <p className="text-white/80 text-sm font-medium">{title}</p>
             {subtitle && <p className="text-white/60 text-xs mt-1">{subtitle}</p>}
           </>
@@ -392,9 +392,9 @@ const BusinessDashboard = () => {
   );
 
   const AlertsWidget = () => (
-    <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 rounded-2xl border border-gray-700/50 backdrop-blur-xl p-6">
+    <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 rounded-2xl border border-gray-700/50 backdrop-blur-xl p-4 sm:p-6">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-xl font-semibold flex items-center">
+        <h3 className="text-lg sm:text-xl font-semibold flex items-center">
           <Bell className="w-5 h-5 mr-2 text-amber-400" />
           Live Alerts
         </h3>
@@ -403,7 +403,7 @@ const BusinessDashboard = () => {
         </span>
       </div>
       
-      <div className="space-y-3 max-h-64 overflow-y-auto">
+      <div className="space-y-3 max-h-64 overflow-y-auto text-sm">
         {alertsData.length === 0 ? (
           <div className="text-center py-4 text-gray-500">
             <CheckCircle className="w-8 h-8 mx-auto mb-2 opacity-50" />
@@ -416,7 +416,7 @@ const BusinessDashboard = () => {
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: index * 0.1 }}
-              className={`p-3 rounded-xl border ${
+              className={`p-2 sm:p-3 rounded-xl border text-xs sm:text-sm ${
                 alert.severity === 'HIGH' ? 'bg-red-500/10 border-red-500/20' :
                 alert.severity === 'MEDIUM' ? 'bg-amber-500/10 border-amber-500/20' :
                 'bg-blue-500/10 border-blue-500/20'
@@ -432,7 +432,7 @@ const BusinessDashboard = () => {
                   {alert.severity}
                 </span>
               </div>
-              <p className="text-gray-400 text-xs">{alert.message}</p>
+              <p className="text-gray-400 text-sm sm:text-base text-xs">{alert.message}</p>
               <p className="text-gray-500 text-xs mt-1">{formatDateTime(alert.timestamp)}</p>
             </motion.div>
           ))
@@ -443,9 +443,9 @@ const BusinessDashboard = () => {
 
   const OverdueWorkOrdersWidget = () => {
     return (
-      <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 rounded-2xl border border-gray-700/50 backdrop-blur-xl p-6">
+      <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 rounded-2xl border border-gray-700/50 backdrop-blur-xl p-4 sm:p-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-xl font-semibold flex items-center">
+          <h3 className="text-lg sm:text-xl font-semibold flex items-center">
             <AlertTriangle className="w-5 h-5 mr-2 text-red-400" />
             Overdue Work Orders
           </h3>
@@ -482,30 +482,30 @@ const BusinessDashboard = () => {
                 </div>
                 
                 <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Product:</span>
+                <div className="flex justify-between items-center text-xs sm:text-sm">
+                    <span className="text-gray-400 text-sm sm:text-base">Product:</span>
                     <span className="text-white font-medium">{order.product_name}</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Quantity:</span>
+                  <div className="flex justify-between items-center text-xs sm:text-sm">
+                    <span className="text-gray-400 text-sm sm:text-base">Quantity:</span>
                     <span className="text-white">{formatNumber(order.quantity_planned)}</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Completed:</span>
+                  <div className="flex justify-between items-center text-xs sm:text-sm">
+                    <span className="text-gray-400 text-sm sm:text-base">Completed:</span>
                     <span className="text-white">{formatNumber(order.quantity_completed)}</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Status:</span>
+                  <div className="flex justify-between items-center text-xs sm:text-sm">
+                    <span className="text-gray-400 text-sm sm:text-base">Status:</span>
                     <span className={`px-2 py-1 rounded text-xs ${
                       order.status === 'in_progress' ? 'bg-blue-500/20 text-blue-400' :
                       order.status === 'released' ? 'bg-amber-500/20 text-amber-400' :
-                      'bg-gray-500/20 text-gray-400'
+                      'bg-gray-500/20 text-gray-400 text-sm sm:text-base'
                     }`}>
                       {order.status.replace('_', ' ').toUpperCase()}
                     </span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Priority:</span>
+                  <div className="flex justify-between items-center text-xs sm:text-sm">
+                    <span className="text-gray-400 text-sm sm:text-base">Priority:</span>
                     <span className={`px-2 py-1 rounded text-xs ${
                       order.priority <= 3 ? 'bg-red-500/20 text-red-400' :
                       order.priority <= 6 ? 'bg-amber-500/20 text-amber-400' :
@@ -527,9 +527,9 @@ const BusinessDashboard = () => {
     const upcomingOrders = getUpcomingWorkOrders();
     
     return (
-      <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 rounded-2xl border border-gray-700/50 backdrop-blur-xl p-6">
+      <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 rounded-2xl border border-gray-700/50 backdrop-blur-xl p-4 sm:p-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-xl font-semibold flex items-center">
+          <h3 className="text-lg sm:text-xl font-semibold flex items-center">
             <Clock className="w-5 h-5 mr-2 text-amber-400" />
             Upcoming Work Orders
           </h3>
@@ -565,20 +565,20 @@ const BusinessDashboard = () => {
                 </div>
                 
                 <div className="space-y-2">
-                  <div className="flex justify-between items-center">
+                <div className="flex justify-between items-center text-xs sm:text-sm">
                     <span className="text-sm opacity-80">Product:</span>
                     <span className="font-medium">{order.product_name}</span>
                   </div>
-                  <div className="flex justify-between items-center">
+                  <div className="flex justify-between items-center text-xs sm:text-sm">
                     <span className="text-sm opacity-80">Quantity:</span>
                     <span className="font-medium">{formatNumber(order.quantity_planned)} units</span>
                   </div>
-                  <div className="flex justify-between items-center">
+                  <div className="flex justify-between items-center text-xs sm:text-sm">
                     <span className="text-sm opacity-80">Status:</span>
                     <span className="font-medium">{order.status?.replace('_', ' ').toUpperCase()}</span>
                   </div>
                   {order.cost_center && (
-                    <div className="flex justify-between items-center">
+                  <div className="flex justify-between items-center text-xs sm:text-sm">
                       <span className="text-sm opacity-80">Cost Center:</span>
                       <span className="font-medium">{order.cost_center}</span>
                     </div>
@@ -596,9 +596,9 @@ const BusinessDashboard = () => {
     const criticalAnomalies = anomalies.filter(a => a.severity === 'HIGH');
     
     return (
-      <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 rounded-2xl border border-gray-700/50 backdrop-blur-xl p-6">
+      <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 rounded-2xl border border-gray-700/50 backdrop-blur-xl p-4 sm:p-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-xl font-semibold flex items-center">
+          <h3 className="text-lg sm:text-xl font-semibold flex items-center">
             <AlertOctagon className="w-5 h-5 mr-2 text-red-400" />
             Production Anomalies
           </h3>
@@ -607,7 +607,7 @@ const BusinessDashboard = () => {
           </span>
         </div>
         
-        <div className="space-y-3 max-h-64 overflow-y-auto">
+        <div className="space-y-3 max-h-64 overflow-y-auto text-sm">
           {criticalAnomalies.length === 0 ? (
             <div className="text-center py-4 text-gray-500">
               <CheckCircle className="w-8 h-8 mx-auto mb-2 opacity-50" />
@@ -650,7 +650,7 @@ const BusinessDashboard = () => {
     );
   
     return (
-      <ResponsiveContainer width="100%" height={300}>
+      <ResponsiveContainer width="100%" height={250} className="text-xs">
         <ComposedChart data={productionTrends}>
           <defs>
             <linearGradient id="produced" x1="0" y1="0" x2="0" y2="1">
@@ -714,7 +714,7 @@ const BusinessDashboard = () => {
     );
 
     return (
-      <ResponsiveContainer width="100%" height={250}>
+      <ResponsiveContainer width="100%" height={200} className="text-xs">
         <RechartsPieChart>
           <Pie
             data={data}
@@ -757,7 +757,7 @@ const BusinessDashboard = () => {
     if (!equipmentData?.daily_oee_data) return null;
     
     return (
-      <ResponsiveContainer width="100%" height={300}>
+      <ResponsiveContainer width="100%" height={300} className="text-xs">
         <ComposedChart data={equipmentData.daily_oee_data}>
           <defs>
             <linearGradient id="oee" x1="0" y1="0" x2="0" y2="1">
@@ -806,7 +806,7 @@ const BusinessDashboard = () => {
     ];
     
     return (
-      <ResponsiveContainer width="100%" height={250}>
+      <ResponsiveContainer width="100%" height={250} className="text-xs">
         <RechartsPieChart>
           <Pie
             data={data}
@@ -850,7 +850,7 @@ const BusinessDashboard = () => {
       .slice(0, 8);
     
     return (
-      <ResponsiveContainer width="100%" height={300}>
+      <ResponsiveContainer width="100%" height={300} className="text-xs">
         <BarChart data={data} layout="vertical" margin={{ left: 80 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
           <XAxis type="number" domain={[0, 100]} stroke="#9CA3AF" />
@@ -858,8 +858,8 @@ const BusinessDashboard = () => {
             type="category" 
             dataKey="equipment_name" 
             stroke="#9CA3AF" 
-            width={100}
-            tick={{ fontSize: 11 }}
+            width={80}
+            tick={{ fontSize: 10 }}
           />
           <Tooltip 
             formatter={(value) => `${value.toFixed(1)}%`}
@@ -903,7 +903,7 @@ const BusinessDashboard = () => {
     );
   
     return (
-      <ResponsiveContainer width="100%" height={300}>
+      <ResponsiveContainer width="100%" height={300} className="text-xs">
         <ComposedChart data={financialTrends}>
           <defs>
             <linearGradient id="revenue" x1="0" y1="0" x2="0" y2="1">
@@ -937,7 +937,7 @@ const BusinessDashboard = () => {
   };
 
   const ViewModeToggle = () => (
-    <div className="flex items-center bg-gray-800/50 rounded-xl p-1 border border-gray-700/50">
+    <div className="flex items-center bg-gray-800/50 rounded-xl p-1 border border-gray-700/50 min-w-max">
       {[
         { key: 'overview', label: 'Overview', icon: Grid },
         { key: 'kpis', label: 'KPIs', icon: Target },
@@ -949,10 +949,10 @@ const BusinessDashboard = () => {
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           onClick={() => setViewMode(key)}
-          className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all ${
+          className={`flex items-center space-x-1 sm:space-x-2 px-3 sm:px-4 py-2 rounded-lg transition-all text-xs sm:text-sm ${
             viewMode === key
               ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg'
-              : 'text-gray-400 hover:text-white hover:bg-gray-700/50'
+              : 'text-gray-400 text-sm sm:text-base text-sm sm:text-base hover:text-white hover:bg-gray-700/50'
           }`}
         >
           <Icon className="w-4 h-4" />
@@ -972,9 +972,9 @@ const BusinessDashboard = () => {
     );
     
     return (
-      <div className="space-y-4">
+      <div className="space-y-3 sm:space-y-4 text-sm sm:text-base">
         {operationsData.scheduleSuggestions.equipment_schedule.slice(0, 3).map((equipment, index) => (
-          <div key={index} className="bg-gray-800/50 rounded-xl p-4 border border-gray-700/50">
+          <div key={index} className="bg-gray-800/50 rounded-xl p-3 sm:p-4 border border-gray-700/50">
             <div className="flex items-center justify-between mb-3">
               <h4 className="font-semibold text-white">{equipment.equipment_name}</h4>
               <span className={`px-2 py-1 rounded text-xs ${
@@ -986,19 +986,19 @@ const BusinessDashboard = () => {
               </span>
             </div>
             
-            <div className="flex items-center justify-between mb-3 text-sm text-gray-400">
+            <div className="flex items-center justify-between mb-3 text-sm text-gray-400 text-sm sm:text-base text-sm sm:text-base">
               <span>Available Capacity: {equipment.available_capacity_pct}%</span>
               <span>Capacity/Hr: {equipment.capacity_per_hour}</span>
             </div>
             
             {equipment.recommended_orders?.length > 0 ? (
               <div className="space-y-2">
-                <p className="text-sm text-gray-400">Recommended Orders:</p>
+                <p className="text-sm text-gray-400 text-sm sm:text-base text-sm sm:text-base">Recommended Orders:</p>
                 {equipment.recommended_orders.slice(0, 2).map((order, idx) => (
                   <div key={idx} className="flex justify-between items-center text-xs bg-gray-900/50 p-3 rounded">
                     <div>
                       <span className="font-medium text-white">{order.wo_number}</span>
-                      <p className="text-gray-400">{order.product_sku}</p>
+                      <p className="text-gray-400 text-sm sm:text-base">{order.product_sku}</p>
                     </div>
                     <div className="text-right">
                       <span className="text-white">{order.estimated_hours}h</span>
@@ -1043,7 +1043,7 @@ const BusinessDashboard = () => {
     return (
       <div className="space-y-3">
         <div className="flex items-center justify-between mb-4">
-          <span className="text-sm text-gray-400">Total Investment Required:</span>
+          <span className="text-sm text-gray-400 text-sm sm:text-base">Total Investment Required:</span>
           <span className="font-semibold text-white">
             {formatCurrency(operationsData.reorderSuggestions.total_investment_required)}
           </span>
@@ -1086,19 +1086,19 @@ const BusinessDashboard = () => {
             <p className="text-2xl font-bold text-red-400">
               {operationsData.rejectionAnalysis.summary?.total_rejected_qty || 0}
             </p>
-            <p className="text-sm text-gray-400">Total Rejected</p>
+            <p className="text-sm text-gray-400 text-sm sm:text-base">Total Rejected</p>
           </div>
           <div className="text-center">
             <p className="text-2xl font-bold text-amber-400">
               {operationsData.rejectionAnalysis.summary?.avg_daily_rejections?.toFixed(0) || 0}
             </p>
-            <p className="text-sm text-gray-400">Daily Average</p>
+            <p className="text-sm text-gray-400 text-sm sm:text-base">Daily Average</p>
           </div>
         </div>
 
         {topProblems.length > 0 && (
           <div>
-            <h5 className="text-sm font-medium text-gray-400 mb-2">Top Problem Products:</h5>
+            <h5 className="text-sm font-medium text-gray-400 text-sm sm:text-base mb-2">Top Problem Products:</h5>
             {topProblems.map(([sku, data], index) => (
               <div key={sku} className="flex items-center justify-between p-2 bg-amber-500/10 border border-amber-500/20 rounded-lg mb-2">
                 <div>
@@ -1120,7 +1120,7 @@ const BusinessDashboard = () => {
   // Loading and Error states
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
         <motion.div 
           animate={{ rotate: 360 }}
           transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
@@ -1128,7 +1128,7 @@ const BusinessDashboard = () => {
         />
         <div className="ml-4 text-white">
           <p className="text-lg font-medium">Loading Dashboard...</p>
-          <p className="text-sm text-gray-400">Fetching business intelligence data</p>
+          <p className="text-sm text-gray-400 text-sm sm:text-base">Fetching business intelligence data</p>
         </div>
       </div>
     );
@@ -1136,8 +1136,8 @@ const BusinessDashboard = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <div className="text-center text-red-400 max-w-md">
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
+       <div className="text-center text-red-400 max-w-md p-4">
           <AlertTriangle className="w-16 h-16 mx-auto mb-4" />
           <p className="text-xl mb-4">{error}</p>
           <div className="space-y-2">
@@ -1147,7 +1147,7 @@ const BusinessDashboard = () => {
             >
               Retry Loading
             </button>
-            <p className="text-sm text-gray-400">
+            <p className="text-sm text-gray-400 text-sm sm:text-base">
               Check your API connection and try again
             </p>
           </div>
@@ -1156,34 +1156,36 @@ const BusinessDashboard = () => {
     );
   }
   return (
-    <div className="min-h-screen bg-gray-900 text-white flex">
+    <div className="min-h-screen bg-gray-900 text-white flex flex-col lg:flex-row">
       <Sidebar />
       {/* Sidebar would go here */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col w-full overflow-x-hidden">
+       <div className="p-3 sm:p-4 md:p-6">
         {/* Header */}
-        <div className="sticky top-0 z-30 bg-gray-900/80 backdrop-blur-xl border-b border-gray-800">
-          <div className="flex items-center justify-between p-6">
+        <div className="sticky top-0 z-30 bg-gray-900/80 backdrop-blur-xl border-b border-gray-800 px-4 sm:px-6">
+         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 sm:p-6">
             <div>
               <motion.h1 
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400"
-              >
+                  initial={{ opacity: 0, y: -20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="text-2xl sm:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 text-center sm:text-left"
+                >
                 Business Intelligence Dashboard
               </motion.h1>
-              <p className="text-gray-400 mt-1">
+              <p className="text-gray-400 text-sm sm:text-base mt-1">
                 Period: {formatDate(dateRange.start_date)} to {formatDate(dateRange.end_date)}
               </p>
             </div>
             
-            <div className="flex items-center space-x-4">
+
+            <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 w-full sm:w-auto">
               <DateRangePicker />
               
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={fetchAllData}
-                className="flex items-center space-x-2 bg-gradient-to-r from-purple-600 to-blue-600 px-4 py-2 rounded-xl hover:from-purple-700 hover:to-blue-700 transition-all"
+                className="flex items-center space-x-2 bg-gradient-to-r from-purple-600 to-blue-600 px-4 py-2 rounded-xl hover:from-purple-700 hover:to-blue-700 transition-all active:scale-95"
               >
                 <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
                 <span className="text-sm">Refresh</span>
@@ -1191,13 +1193,13 @@ const BusinessDashboard = () => {
             </div>
           </div>
           
-          <div className="px-6 pb-4">
+          <div className="px-4 sm:px-6 pb-4 overflow-x-auto">
             <ViewModeToggle />
           </div>
         </div>
 
         {/* Main Content */}
-        <div className="p-6">
+        <div className="p-3 sm:p-4 md:p-6 flex-1 flex flex-col w-full overflow-x-hidden">
           <AnimatePresence mode="wait">
             {viewMode === 'overview' && (
               <motion.div
@@ -1208,7 +1210,7 @@ const BusinessDashboard = () => {
                 className="space-y-6"
               >
                 {/* Key Metrics */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
                   <KPICard
                     title="Revenue"
                     value={formatCurrency(dashboardData?.financial_highlights?.revenue)}
@@ -1247,7 +1249,7 @@ const BusinessDashboard = () => {
                 </div>
 
                 {/* Additional KPIs */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
                   <KPICard
                     title="OEE"
                     value={`${dashboardData?.key_performance_indicators?.overall_equipment_effectiveness?.toFixed(1) || '0'}%`}
@@ -1286,16 +1288,16 @@ const BusinessDashboard = () => {
                 </div>
 
                 {/* Alerts and Overdue Work Orders */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">
                   <AlertsWidget />
                   <OverdueWorkOrdersWidget />
                 </div>
 
                 {/* Charts and Data */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">
                   {/* Production Trend */}
-                  <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 rounded-2xl border border-gray-700/50 backdrop-blur-xl p-6">
-                    <h3 className="text-xl font-semibold mb-4 flex items-center">
+                  <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 rounded-2xl border border-gray-700/50 backdrop-blur-xl p-4 sm:p-6">
+                    <h3 className="text-lg sm:text-xl font-semibold mb-4 flex items-center">
                       <BarChart3 className="w-5 h-5 mr-2 text-blue-400" />
                       Production Trends
                     </h3>
@@ -1303,8 +1305,8 @@ const BusinessDashboard = () => {
                   </div>
 
                   {/* Quality Overview */}
-                  <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 rounded-2xl border border-gray-700/50 backdrop-blur-xl p-6">
-                    <h3 className="text-xl font-semibold mb-4 flex items-center">
+                  <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 rounded-2xl border border-gray-700/50 backdrop-blur-xl p-4 sm:p-6">
+                    <h3 className="text-lg sm:text-xl font-semibold mb-4 flex items-center">
                       <PieChart className="w-5 h-5 mr-2 text-emerald-400" />
                       Quality Distribution
                     </h3>
@@ -1314,25 +1316,25 @@ const BusinessDashboard = () => {
                         <p className="text-2xl font-bold text-emerald-400">
                           {formatNumber(dashboardData?.production_summary?.total_produced)}
                         </p>
-                        <p className="text-sm text-gray-400">Good Quality</p>
+                        <p className="text-sm text-gray-400 text-sm sm:text-base">Good Quality</p>
                       </div>
                       <div className="text-center">
                         <p className="text-2xl font-bold text-red-400">
                           {formatNumber(dashboardData?.production_summary?.total_rejected)}
                         </p>
-                        <p className="text-sm text-gray-400">Rejected</p>
+                        <p className="text-sm text-gray-400 text-sm sm:text-base">Rejected</p>
                       </div>
                     </div>
                   </div>
                 </div>
 
                 {/* Upcoming Work Orders and Financial Trends */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">
                   <UpcomingWorkOrdersWidget />
                   
                   {/* Financial Trends */}
-                  <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 rounded-2xl border border-gray-700/50 backdrop-blur-xl p-6">
-                    <h3 className="text-xl font-semibold mb-4 flex items-center">
+                  <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 rounded-2xl border border-gray-700/50 backdrop-blur-xl p-4 sm:p-6">
+                    <h3 className="text-lg sm:text-xl font-semibold mb-4 flex items-center">
                       <TrendingUpIcon className="w-5 h-5 mr-2 text-emerald-400" />
                       Financial Trends
                     </h3>
@@ -1341,14 +1343,14 @@ const BusinessDashboard = () => {
                 </div>
 
                 {/* Equipment Status */}
-                <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 rounded-2xl border border-gray-700/50 backdrop-blur-xl p-6">
-                  <h3 className="text-xl font-semibold mb-4 flex items-center">
+                <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 rounded-2xl border border-gray-700/50 backdrop-blur-xl p-4 sm:p-6">
+                  <h3 className="text-lg sm:text-xl font-semibold mb-4 flex items-center">
                     <Cpu className="w-5 h-5 mr-2 text-cyan-400" />
                     Equipment Status
                   </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
                     {dashboardData?.equipment_status?.equipment_details?.slice(0, 6).map((equipment, index) => (
-                      <div key={index} className="bg-gray-800/50 rounded-xl p-4 border border-gray-700/50">
+                      <div key={index} className="bg-gray-800/50 rounded-xl p-3 sm:p-4 border border-gray-700/50">
                         <div className="flex items-center justify-between mb-2">
                           <h4 className="font-medium text-white">{equipment.equipment_name}</h4>
                           <span className={`px-2 py-1 rounded text-xs ${
@@ -1359,7 +1361,7 @@ const BusinessDashboard = () => {
                             {equipment.maintenance_status?.replace('_', ' ')}
                           </span>
                         </div>
-                        <p className="text-sm text-gray-400 mb-2">Recent Production: {formatNumber(equipment.recent_production)} units</p>
+                        <p className="text-sm text-gray-400 text-sm sm:text-base mb-2">Recent Production: {formatNumber(equipment.recent_production)} units</p>
                         <div className="flex items-center justify-between text-xs text-gray-500">
                           <span>Status: {equipment.status}</span>
                           {equipment.next_maintenance && (
@@ -1381,7 +1383,7 @@ const BusinessDashboard = () => {
                 exit={{ opacity: 0, y: -20 }}
                 className="space-y-6"
               >
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
                   <KPICard
                     title="OEE"
                     value={`${dashboardData?.key_performance_indicators?.overall_equipment_effectiveness?.toFixed(1) || '0'}%`}
@@ -1419,62 +1421,62 @@ const BusinessDashboard = () => {
                   />
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">
                   {/* Financial KPIs */}
-                  <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 rounded-2xl border border-gray-700/50 backdrop-blur-xl p-6">
-                    <h3 className="text-xl font-semibold mb-4 flex items-center">
+                  <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 rounded-2xl border border-gray-700/50 backdrop-blur-xl p-4 sm:p-6">
+                    <h3 className="text-lg sm:text-xl font-semibold mb-4 flex items-center">
                       <DollarSignIcon className="w-5 h-5 mr-2 text-emerald-400" />
                       Financial Performance
                     </h3>
-                    <div className="space-y-4">
-                      <div className="flex justify-between items-center">
-                        <span className="text-gray-400">Revenue</span>
+                    <div className="space-y-3 sm:space-y-4 text-sm sm:text-base">
+                    <div className="flex justify-between items-center text-xs sm:text-sm">
+                        <span className="text-gray-400 text-sm sm:text-base">Revenue</span>
                         <span className="font-semibold text-white">{formatCurrency(dashboardData?.financial_highlights?.revenue)}</span>
                       </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-gray-400">Gross Profit</span>
+                      <div className="flex justify-between items-center text-xs sm:text-sm">
+                        <span className="text-gray-400 text-sm sm:text-base">Gross Profit</span>
                         <span className="font-semibold text-white">{formatCurrency(dashboardData?.financial_highlights?.gross_profit)}</span>
                       </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-gray-400">Net Profit</span>
+                      <div className="flex justify-between items-center text-xs sm:text-sm">
+                        <span className="text-gray-400 text-sm sm:text-base">Net Profit</span>
                         <span className="font-semibold text-emerald-400">{formatCurrency(dashboardData?.financial_highlights?.net_profit)}</span>
                       </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-gray-400">Gross Margin</span>
+                      <div className="flex justify-between items-center text-xs sm:text-sm">
+                        <span className="text-gray-400 text-sm sm:text-base">Gross Margin</span>
                         <span className="font-semibold text-white">{dashboardData?.financial_highlights?.gross_margin?.toFixed(1)}%</span>
                       </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-gray-400">Net Margin</span>
+                      <div className="flex justify-between items-center text-xs sm:text-sm">
+                        <span className="text-gray-400 text-sm sm:text-base">Net Margin</span>
                         <span className="font-semibold text-white">{dashboardData?.financial_highlights?.net_margin?.toFixed(1)}%</span>
                       </div>
                     </div>
                   </div>
 
                   {/* Production KPIs */}
-                  <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 rounded-2xl border border-gray-700/50 backdrop-blur-xl p-6">
-                    <h3 className="text-xl font-semibold mb-4 flex items-center">
+                  <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 rounded-2xl border border-gray-700/50 backdrop-blur-xl p-4 sm:p-6">
+                    <h3 className="text-lg sm:text-xl font-semibold mb-4 flex items-center">
                       <Factory className="w-5 h-5 mr-2 text-blue-400" />
                       Production Metrics
                     </h3>
-                    <div className="space-y-4">
-                      <div className="flex justify-between items-center">
-                        <span className="text-gray-400">Total Produced</span>
+                    <div className="space-y-3 sm:space-y-4 text-sm sm:text-base">
+                    <div className="flex justify-between items-center text-xs sm:text-sm">
+                        <span className="text-gray-400 text-sm sm:text-base">Total Produced</span>
                         <span className="font-semibold text-white">{formatNumber(dashboardData?.production_summary?.total_produced)}</span>
                       </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-gray-400">Total Rejected</span>
+                      <div className="flex justify-between items-center text-xs sm:text-sm">
+                        <span className="text-gray-400 text-sm sm:text-base">Total Rejected</span>
                         <span className="font-semibold text-red-400">{formatNumber(dashboardData?.production_summary?.total_rejected)}</span>
                       </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-gray-400">Rejection Rate</span>
+                      <div className="flex justify-between items-center text-xs sm:text-sm">
+                        <span className="text-gray-400 text-sm sm:text-base">Rejection Rate</span>
                         <span className="font-semibold text-white">{dashboardData?.quality_metrics?.rejection_rate?.toFixed(1)}%</span>
                       </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-gray-400">Active Work Orders</span>
+                      <div className="flex justify-between items-center text-xs sm:text-sm">
+                        <span className="text-gray-400 text-sm sm:text-base">Active Work Orders</span>
                         <span className="font-semibold text-white">{dashboardData?.production_summary?.active_work_orders}</span>
                       </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-gray-400">Completed Orders</span>
+                      <div className="flex justify-between items-center text-xs sm:text-sm">
+                        <span className="text-gray-400 text-sm sm:text-base">Completed Orders</span>
                         <span className="font-semibold text-emerald-400">{dashboardData?.production_summary?.completed_work_orders}</span>
                       </div>
                     </div>
@@ -1491,10 +1493,10 @@ const BusinessDashboard = () => {
                 exit={{ opacity: 0, y: -20 }}
                 className="space-y-6"
               >
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">
                   {/* OEE Trends */}
-                  <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 rounded-2xl border border-gray-700/50 backdrop-blur-xl p-6">
-                    <h3 className="text-xl font-semibold mb-4 flex items-center">
+                  <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 rounded-2xl border border-gray-700/50 backdrop-blur-xl p-4 sm:p-6">
+                    <h3 className="text-lg sm:text-xl font-semibold mb-4 flex items-center">
                       <Gauge className="w-5 h-5 mr-2 text-indigo-400" />
                       OEE Trends
                     </h3>
@@ -1504,26 +1506,26 @@ const BusinessDashboard = () => {
                         <p className="text-2xl font-bold text-blue-400">
                           {analyticsData?.oeeTrends?.overall_oee?.availability?.toFixed(1) || '0'}%
                         </p>
-                        <p className="text-sm text-gray-400">Availability</p>
+                        <p className="text-sm text-gray-400 text-sm sm:text-base">Availability</p>
                       </div>
                       <div>
                         <p className="text-2xl font-bold text-purple-400">
                           {analyticsData?.oeeTrends?.overall_oee?.performance?.toFixed(1) || '0'}%
                         </p>
-                        <p className="text-sm text-gray-400">Performance</p>
+                        <p className="text-sm text-gray-400 text-sm sm:text-base">Performance</p>
                       </div>
                       <div>
                         <p className="text-2xl font-bold text-pink-400">
                           {analyticsData?.oeeTrends?.overall_oee?.quality?.toFixed(1) || '0'}%
                         </p>
-                        <p className="text-sm text-gray-400">Quality</p>
+                        <p className="text-sm text-gray-400 text-sm sm:text-base">Quality</p>
                       </div>
                     </div>
                   </div>
 
                   {/* ABC Analysis */}
-                  <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 rounded-2xl border border-gray-700/50 backdrop-blur-xl p-6">
-                    <h3 className="text-xl font-semibold mb-4 flex items-center">
+                  <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 rounded-2xl border border-gray-700/50 backdrop-blur-xl p-4 sm:p-6">
+                    <h3 className="text-lg sm:text-xl font-semibold mb-4 flex items-center">
                       <Layers className="w-5 h-5 mr-2 text-amber-400" />
                       Inventory ABC Analysis
                     </h3>
@@ -1531,19 +1533,19 @@ const BusinessDashboard = () => {
                     <div className="mt-4 grid grid-cols-3 gap-4 text-center">
                       <div>
                         <p className="text-sm font-medium text-red-400">A Items</p>
-                        <p className="text-xs text-gray-400">
+                        <p className="text-xs text-gray-400 text-sm sm:text-base">
                           {analyticsData?.abcAnalysis?.classification_summary?.A?.percentage?.toFixed(1) || '0'}% of items
                         </p>
                       </div>
                       <div>
                         <p className="text-sm font-medium text-amber-400">B Items</p>
-                        <p className="text-xs text-gray-400">
+                        <p className="text-xs text-gray-400 text-sm sm:text-base">
                           {analyticsData?.abcAnalysis?.classification_summary?.B?.percentage?.toFixed(1) || '0'}% of items
                         </p>
                       </div>
                       <div>
                         <p className="text-sm font-medium text-emerald-400">C Items</p>
-                        <p className="text-xs text-gray-400">
+                        <p className="text-xs text-gray-400 text-sm sm:text-base">
                           {analyticsData?.abcAnalysis?.classification_summary?.C?.percentage?.toFixed(1) || '0'}% of items
                         </p>
                       </div>
@@ -1552,8 +1554,8 @@ const BusinessDashboard = () => {
                 </div>
 
                 {/* Capacity Utilization */}
-                <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 rounded-2xl border border-gray-700/50 backdrop-blur-xl p-6">
-                  <h3 className="text-xl font-semibold mb-4 flex items-center">
+                <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 rounded-2xl border border-gray-700/50 backdrop-blur-xl p-4 sm:p-6">
+                  <h3 className="text-lg sm:text-xl font-semibold mb-4 flex items-center">
                     <Cpu className="w-5 h-5 mr-2 text-cyan-400" />
                     Equipment Capacity Utilization
                   </h3>
@@ -1561,15 +1563,15 @@ const BusinessDashboard = () => {
                   <div className="mt-4 grid grid-cols-3 gap-4 text-center">
                     <div>
                       <p className="text-sm font-medium text-emerald-400">Optimal</p>
-                      <p className="text-xs text-gray-400">70-85%</p>
+                      <p className="text-xs text-gray-400 text-sm sm:text-base">70-85%</p>
                     </div>
                     <div>
                       <p className="text-sm font-medium text-amber-400">High</p>
-                      <p className="text-xs text-gray-400">85-95%</p>
+                      <p className="text-xs text-gray-400 text-sm sm:text-base">85-95%</p>
                     </div>
                     <div>
                       <p className="text-sm font-medium text-red-400">Critical</p>
-                      <p className="text-xs text-gray-400">95%+</p>
+                      <p className="text-xs text-gray-400 text-sm sm:text-base">95%+</p>
                     </div>
                   </div>
                 </div>
@@ -1587,10 +1589,10 @@ const BusinessDashboard = () => {
                 exit={{ opacity: 0, y: -20 }}
                 className="space-y-6"
               >
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">
                   {/* Schedule Suggestions */}
-                  <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 rounded-2xl border border-gray-700/50 backdrop-blur-xl p-6">
-                    <h3 className="text-xl font-semibold mb-4 flex items-center">
+                  <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 rounded-2xl border border-gray-700/50 backdrop-blur-xl p-4 sm:p-6">
+                    <h3 className="text-lg sm:text-xl font-semibold mb-4 flex items-center">
                       <CalendarIcon className="w-5 h-5 mr-2 text-blue-400" />
                       Production Schedule Suggestions
                     </h3>
@@ -1598,8 +1600,8 @@ const BusinessDashboard = () => {
                   </div>
 
                   {/* Reorder Suggestions */}
-                  <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 rounded-2xl border border-gray-700/50 backdrop-blur-xl p-6">
-                    <h3 className="text-xl font-semibold mb-4 flex items-center">
+                  <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 rounded-2xl border border-gray-700/50 backdrop-blur-xl p-4 sm:p-6">
+                    <h3 className="text-lg sm:text-xl font-semibold mb-4 flex items-center">
                       <AlertOctagon className="w-5 h-5 mr-2 text-red-400" />
                       Critical Reorder Suggestions
                     </h3>
@@ -1608,8 +1610,8 @@ const BusinessDashboard = () => {
                 </div>
 
                 {/* Rejection Analysis */}
-                <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 rounded-2xl border border-gray-700/50 backdrop-blur-xl p-6">
-                  <h3 className="text-xl font-semibold mb-4 flex items-center">
+                <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 rounded-2xl border border-gray-700/50 backdrop-blur-xl p-4 sm:p-6">
+                  <h3 className="text-lg sm:text-xl font-semibold mb-4 flex items-center">
                     <Shield className="w-5 h-5 mr-2 text-amber-400" />
                     Rejection Analysis
                   </h3>
@@ -1617,16 +1619,16 @@ const BusinessDashboard = () => {
                 </div>
 
                 {/* Quick Actions */}
-                <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 rounded-2xl border border-gray-700/50 backdrop-blur-xl p-6">
-                  <h3 className="text-xl font-semibold mb-4 flex items-center">
+                <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 rounded-2xl border border-gray-700/50 backdrop-blur-xl p-4 sm:p-6">
+                  <h3 className="text-lg sm:text-xl font-semibold mb-4 flex items-center">
                     <Zap className="w-5 h-5 mr-2 text-purple-400" />
                     Quick Actions
                   </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                     <motion.button
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
-                      className="bg-blue-600 hover:bg-blue-700 p-4 rounded-xl text-center transition-colors"
+                      className="bg-blue-600 hover:bg-blue-700 p-3 sm:p-4 rounded-xl text-center transition-colors active:scale-95"
                     >
                       <FileText className="w-8 h-8 mx-auto mb-2" />
                       <p className="font-medium">Generate Report</p>
@@ -1635,7 +1637,7 @@ const BusinessDashboard = () => {
                     <motion.button
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
-                      className="bg-purple-600 hover:bg-purple-700 p-4 rounded-xl text-center transition-colors"
+                      className="bg-purple-600 hover:bg-purple-700 p-4 rounded-xl text-center transition-colors active:scale-95"
                     >
                       <ShoppingCart className="w-8 h-8 mx-auto mb-2" />
                       <p className="font-medium">Create Purchase Order</p>
@@ -1644,7 +1646,7 @@ const BusinessDashboard = () => {
                     <motion.button
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
-                      className="bg-emerald-600 hover:bg-emerald-700 p-4 rounded-xl text-center transition-colors"
+                      className="bg-emerald-600 hover:bg-emerald-700 p-4 rounded-xl text-center transition-colors active:scale-95"
                     >
                       <ClipboardList className="w-8 h-8 mx-auto mb-2" />
                       <p className="font-medium">New Work Order</p>
@@ -1655,6 +1657,7 @@ const BusinessDashboard = () => {
             )}
           </AnimatePresence>
         </div>
+        </div>         
       </div>
     </div>
   );
