@@ -29,7 +29,7 @@ const Products = () => {
   const [formData, setFormData] = useState({
     sku: '',
     product_name: '',
-    product_type: 'finished_goods',
+    product_type: 'finished_good', // Changed from 'finished_goods'
     uom: 'pcs',
     category: '',
     standard_cost: '',
@@ -66,10 +66,11 @@ const Products = () => {
       }
       setShowProductModal(false);
       setEditingProduct(null);
+      // Reset to correct default values
       setFormData({
         sku: '',
         product_name: '',
-        product_type: 'finished_good',
+        product_type: 'finished_good', // Changed from 'finished_goods'
         uom: 'pcs',
         category: '',
         standard_cost: '',
@@ -84,11 +85,12 @@ const Products = () => {
   };
 
   const handleEditProduct = (product) => {
+    console.log('Editing product:', product); // Debug log
     setEditingProduct(product);
     setFormData({
       sku: product.sku,
       product_name: product.product_name,
-      product_type: product.product_type,
+      product_type: product.product_type, // This should match your Django choices
       uom: product.uom,
       category: product.category,
       standard_cost: product.standard_cost,
@@ -595,7 +597,7 @@ const Products = () => {
                     >
                       <option value="raw_material">Raw Material</option>
                       <option value="semi_finished">Semi-Finished</option>
-                      <option value="finished_good">Finished Good</option>
+                      <option value="finished_good">Finished Good</option> {/* Changed from 'finished_goods' */}
                       <option value="consumable">Consumable</option>
                     </select>
                   </div>
