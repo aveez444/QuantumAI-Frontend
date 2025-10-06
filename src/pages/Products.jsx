@@ -24,6 +24,8 @@ const Products = () => {
   const [showProductModal, setShowProductModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [viewingProduct, setViewingProduct] = useState(null);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -98,6 +100,11 @@ const Products = () => {
       specifications: product.specifications
     });
     setShowProductModal(true);
+  };
+
+  const handleViewProduct = (product) => {
+    setViewingProduct(product);
+    setShowDetailModal(true);
   };
 
   const handleDeleteProduct = async () => {
@@ -349,6 +356,7 @@ const Products = () => {
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
                     className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 rounded-2xl border border-gray-700/50 backdrop-blur-xl p-5 group hover:border-purple-500/30 transition-all"
+                    onClick={() => handleViewProduct(product)} // ADD THIS LINE
                   >
                     <div className="flex items-start justify-between mb-4">
                       <div className={`p-2 rounded-lg ${stockStatus.bg}`}>
@@ -356,13 +364,26 @@ const Products = () => {
                       </div>
                       <div className="flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
-                          onClick={() => handleEditProduct(product)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleViewProduct(product);
+                          }}
+                          className="p-1 hover:bg-gray-700/50 rounded"
+                        >
+                          <Eye className="w-4 h-4 text-green-400" /> {/* ADD THIS BUTTON */}
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEditProduct(product);
+                          }}
                           className="p-1 hover:bg-gray-700/50 rounded"
                         >
                           <Edit className="w-4 h-4 text-blue-400" />
                         </button>
                         <button
-                          onClick={() => {
+                          onClick={(e) => {
+                            e.stopPropagation();
                             setEditingProduct(product);
                             setShowDeleteConfirm(true);
                           }}
@@ -451,6 +472,12 @@ const Products = () => {
                         </td>
                         <td className="py-3 px-4 text-right">
                           <div className="flex items-center justify-end space-x-2">
+                          <button
+                            onClick={() => handleViewProduct(product)}
+                            className="p-1 hover:bg-gray-700/50 rounded text-green-400"
+                          >
+                            <Eye className="w-4 h-4" /> {/* ADD THIS BUTTON */}
+                          </button>
                             <button
                               onClick={() => handleEditProduct(product)}
                               className="p-1 hover:bg-gray-700/50 rounded text-blue-400"
@@ -730,6 +757,167 @@ const Products = () => {
                   >
                     Delete Product
                   </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      {/* Product Detail Modal */}
+      <AnimatePresence>
+        {showDetailModal && viewingProduct && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+            onClick={() => setShowDetailModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl border border-gray-700/50 w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl"
+              onClick={e => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="p-6 border-b border-gray-700/50 bg-gradient-to-r from-gray-800 to-gray-900 rounded-t-2xl">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 rounded-xl bg-gradient-to-r from-purple-500/20 to-blue-500/20">
+                      <Package className="w-6 h-6 text-purple-400" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-bold text-white">Product Details</h3>
+                      <p className="text-sm text-gray-400">Complete product information</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setShowDetailModal(false)}
+                    className="p-2 hover:bg-gray-700/50 rounded-xl transition-all duration-200 text-gray-400 hover:text-white"
+                  >
+                    <XCircle className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+              
+              {/* Content */}
+              <div className="p-6">
+                {/* Product Header */}
+                <div className="flex items-start space-x-4 mb-8 p-4 bg-gray-800/30 rounded-2xl border border-gray-700/30">
+                  <div className="p-3 rounded-xl bg-gradient-to-r from-purple-500/20 to-blue-500/20">
+                    <Package className="w-8 h-8 text-purple-400" />
+                  </div>
+                  <div className="flex-1">
+                    <h2 className="text-2xl font-bold text-white mb-1">{viewingProduct.product_name}</h2>
+                    <div className="flex items-center space-x-4">
+                      <p className="text-gray-400 font-mono text-sm bg-gray-900/50 px-2 py-1 rounded-lg">SKU: {viewingProduct.sku}</p>
+                      <span className={`px-2 py-1 rounded-lg text-xs font-medium ${
+                        getStockStatus(viewingProduct.current_stock, viewingProduct.reorder_point).bg
+                      } ${getStockStatus(viewingProduct.current_stock, viewingProduct.reorder_point).color}`}>
+                        {getStockStatus(viewingProduct.current_stock, viewingProduct.reorder_point).status.replace('-', ' ')}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Product Details Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                  {/* Left Column */}
+                  <div className="space-y-4">
+                    <div className="bg-gray-800/20 rounded-xl p-4 border border-gray-700/30">
+                      <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Basic Information</label>
+                      <div className="space-y-3">
+                        <div>
+                          <p className="text-sm text-gray-400">Product Type</p>
+                          <p className="text-white font-medium capitalize mt-1">{viewingProduct.product_type?.replace(/_/g, ' ')}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-400">Category</p>
+                          <p className="text-white font-medium mt-1">{viewingProduct.category || 'Not specified'}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-400">Unit of Measure</p>
+                          <p className="text-white font-medium mt-1">{viewingProduct.uom.toUpperCase()}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Right Column */}
+                  <div className="space-y-4">
+                    <div className="bg-gray-800/20 rounded-xl p-4 border border-gray-700/30">
+                      <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Inventory Details</label>
+                      <div className="space-y-3">
+                        <div>
+                          <p className="text-sm text-gray-400">Current Stock</p>
+                          <p className="text-white font-medium text-lg mt-1">
+                            {formatNumber(viewingProduct.current_stock)} {viewingProduct.uom}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-400">Reorder Point</p>
+                          <p className="text-white font-medium mt-1">{formatNumber(viewingProduct.reorder_point)}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-400">Standard Cost</p>
+                          <p className="text-emerald-400 font-medium text-lg mt-1">{formatCurrency(viewingProduct.standard_cost)}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-400">Stock Value</p>
+                          <p className="text-purple-400 font-medium text-lg mt-1">{formatCurrency(viewingProduct.stock_value)}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Specifications */}
+                <div className="bg-gray-800/20 rounded-xl p-4 border border-gray-700/30">
+                  <div className="flex items-center space-x-2 mb-4">
+                    <Info className="w-4 h-4 text-blue-400" />
+                    <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider">Specifications</label>
+                  </div>
+                  <div className="bg-gray-900/30 rounded-xl p-4 min-h-[120px] border border-gray-700/20">
+                    {viewingProduct.specifications ? (
+                      <p className="text-white whitespace-pre-wrap leading-relaxed">
+                        {viewingProduct.specifications}
+                      </p>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center h-full text-gray-500">
+                        <Info className="w-8 h-8 mb-2 opacity-50" />
+                        <p className="text-sm">No specifications provided</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+              
+              {/* Footer */}
+              <div className="p-6 border-t border-gray-700/50 bg-gradient-to-r from-gray-900 to-gray-800 rounded-b-2xl">
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center space-x-2 text-sm text-gray-400">
+                    <Calendar className="w-4 h-4" />
+                    <span>Last updated: {new Date().toLocaleDateString()}</span>
+                  </div>
+                  <div className="flex space-x-3">
+                    <button
+                      onClick={() => {
+                        setShowDetailModal(false);
+                        handleEditProduct(viewingProduct);
+                      }}
+                      className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-xl transition-all duration-200"
+                    >
+                      <Edit className="w-4 h-4" />
+                      <span>Edit Product</span>
+                    </button>
+                    <button
+                      onClick={() => setShowDetailModal(false)}
+                      className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 px-6 py-2 rounded-xl transition-all duration-200"
+                    >
+                      Close
+                    </button>
+                  </div>
                 </div>
               </div>
             </motion.div>

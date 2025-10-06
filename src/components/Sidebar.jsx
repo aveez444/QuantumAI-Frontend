@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   FiHome, FiDatabase, FiSettings, FiBarChart2, FiUpload,
-  FiLogOut, FiMenu, FiChevronDown, FiUser
+  FiLogOut, FiMenu, FiChevronDown, FiUser, FiFileText
 } from 'react-icons/fi';
 import { FaRobot } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
@@ -105,6 +105,13 @@ const Sidebar = () => {
         { name: 'Journals', path: '/finance/journals' },
         { name: 'Cost Centers', path: '/finance/cost-centers' },
         { name: 'Trial Balance', path: '/finance/reports' }
+      ]
+    },
+    {
+      name: 'Documents', icon: <FiFileText />, subItems: [
+        { name: 'Customer Purchase Orders', path: '/customer-order' },
+        { name: 'Customer Invoices', path: '/invoices' },
+        { name: 'Reconciliation & Payment Advice', path: '/reconcile' }
       ]
     },
     {

@@ -1244,8 +1244,8 @@ const WorkOrders = () => {
               </div>
             </div>
           </div>
-          
-          {/* Details Grid */}
+        
+              {/* Details Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-4">
               <h4 className="text-lg font-semibold text-white border-b border-gray-700/50 pb-2">Order Details</h4>
@@ -1280,7 +1280,7 @@ const WorkOrders = () => {
                 </div>
               </div>
             </div>
-            
+  
             <div className="space-y-4">
               <h4 className="text-lg font-semibold text-white border-b border-gray-700/50 pb-2">Timeline & Progress</h4>
               
@@ -1309,7 +1309,23 @@ const WorkOrders = () => {
               </div>
             </div>
           </div>
-          
+                      {/* Description Section */}
+                      <div className="space-y-4">
+              <h4 className="text-lg font-semibold text-white border-b border-gray-700/50 pb-2">Description</h4>
+              <div className="bg-gray-900/30 rounded-xl p-4 border border-gray-800/50 min-h-[120px]">
+                {selectedWorkOrder.description ? (
+                  <p className="text-white whitespace-pre-wrap leading-relaxed">
+                    {selectedWorkOrder.description}
+                  </p>
+                ) : (
+                  <div className="flex flex-col items-center justify-center h-full text-gray-500">
+                    <FileText className="w-8 h-8 mb-2 opacity-50" />
+                    <p className="text-sm">No description provided</p>
+                  </div>
+                )}
+              </div>
+            </div>
+                    
           {/* Actions */}
           <div className="flex justify-end space-x-3 pt-4 border-t border-gray-700/50">
             <button

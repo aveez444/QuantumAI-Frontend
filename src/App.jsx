@@ -23,6 +23,10 @@ import Solutions from './pages/SolutionsPage';
 import AboutUs from './pages/AboutUs';
 import FeaturesPage from './pages/FeaturesPage';
 import StockReports from './pages/StockReports';
+import CustomerOrders from './pages/CustomerOrders';
+import CustomerInvoices from './pages/Invoice';
+import ReconciliationManagement from './pages/ReconciliationManagement';
+import InvoiceReconciliation from './pages/ReconciliationManagement';
 
 function App() {
   return (
@@ -52,6 +56,12 @@ function App() {
         <Route path="/finance/journals" element={<GLJournals />} />
         <Route path="/finance/cost-centers" element={<CostCenters />} />
         <Route path="/finance/reports" element={<FinancialReports />} />
+
+        <Route path="/invoices" element={<CustomerInvoices />} />
+        <Route path="/customer-order" element={<CustomerOrders />} />
+
+        <Route path="/reconcile" element={<ReconciliationManagement />} />
+        <Route path="/reconcile2" element={<InvoiceReconciliation />} />
 
         <Route path="/ai/query" element={<AIAssistant />} />
 
