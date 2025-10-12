@@ -27,6 +27,7 @@ import CustomerOrders from './pages/CustomerOrders';
 import CustomerInvoices from './pages/Invoice';
 import ReconciliationManagement from './pages/ReconciliationManagement';
 import InvoiceReconciliation from './pages/ReconciliationManagement';
+import ProductionReview from './pages/ProductionReview';
 
 function App() {
   return (
@@ -61,9 +62,10 @@ function App() {
         <Route path="/customer-order" element={<CustomerOrders />} />
 
         <Route path="/reconcile" element={<ReconciliationManagement />} />
-        <Route path="/reconcile2" element={<InvoiceReconciliation />} />
 
         <Route path="/ai/query" element={<AIAssistant />} />
+
+        <Route path="/production/review" element={<ProductionReview />} />
 
         {/* Add more routes later, e.g., <Route path="/dashboard" element={<Dashboard />} /> */}
       </Routes>

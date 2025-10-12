@@ -311,21 +311,21 @@ const PaymentReconciliation = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white flex">
-      <Sidebar />
-      
-      <div className="flex-1 p-6 ml-0 lg:ml-64">
-        {/* Header */}
-        <div className="mb-8">
-          <motion.h1 
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400"
-          >
-            Payment Reconciliation
-          </motion.h1>
-          <p className="text-gray-400 mt-2">Comprehensive payment advice and invoice reconciliation</p>
-        </div>
+        <div className="min-h-screen bg-gray-900 text-white flex">
+        <Sidebar />
+        
+        <div className="flex-1 p-6">
+          {/* Header */}
+          <div className="mb-8">
+            <motion.h1 
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400"
+            >
+              Payment Reconciliation
+            </motion.h1>
+            <p className="text-gray-400 mt-2">Comprehensive payment advice and invoice reconciliation</p>
+          </div>
 
         {/* Tab Navigation */}
         <div className="flex space-x-2 mb-8 overflow-x-auto pb-2">
@@ -601,7 +601,7 @@ const PaymentAdvicesView = ({ advices, onAdd, onView, onEdit, onDelete, formatCu
       </button>
     </div>
 
-    <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 rounded-2xl border border-gray-700/50 backdrop-blur-xl overflow-hidden">
+    <div className="bg-gradient-to-br from-gray-900/50 to-gray-900/50 rounded-2xl border border-gray-700/50 backdrop-blur-xl overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead>
@@ -698,7 +698,7 @@ const ReconcileView = ({
   <div className="space-y-6">
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       {/* Invoice Entry Panel */}
-      <div className="lg:col-span-1 bg-gradient-to-br from-gray-800/50 to-gray-900/50 rounded-2xl border border-gray-700/50 backdrop-blur-xl p-6">
+      <div className="lg:col-span-1 bg-gradient-to-br from-gray-900/50 to-gray-900/50 rounded-2xl border border-gray-700/50 backdrop-blur-xl p-6">
         <h3 className="text-xl font-semibold text-white mb-4 flex items-center">
           <FileCheck className="w-6 h-6 mr-2 text-blue-400" />
           Invoice Entry
@@ -851,7 +851,7 @@ const ReconcileView = ({
 
             {/* Recommendations */}
             {reconciliationResult.recommendations && reconciliationResult.recommendations.length > 0 && (
-              <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 rounded-xl border border-gray-700/50 p-4">
+              <div className="bg-gradient-to-br from-gray-900/50 to-gray-900/50 rounded-xl border border-gray-700/50 p-4">
                 <h4 className="text-sm font-semibold text-white mb-3 flex items-center">
                   <AlertCircle className="w-4 h-4 mr-2 text-amber-400" />
                   Recommendations
@@ -876,7 +876,7 @@ const ReconcileView = ({
 
             {/* Matched Invoices */}
             {reconciliationResult.matched_invoices.length > 0 && (
-              <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 rounded-xl border border-gray-700/50 overflow-hidden">
+              <div className="bg-gradient-to-br from-gray-900/50 to-gray-900/50 rounded-xl border border-gray-700/50 overflow-hidden">
                 <div className="p-4 border-b border-gray-700/50 flex items-center justify-between">
                   <h3 className="text-lg font-semibold text-white flex items-center">
                     <CheckCircle className="w-5 h-5 mr-2 text-emerald-400" />
@@ -937,7 +937,7 @@ const ReconcileView = ({
 
             {/* Missing Invoices */}
             {reconciliationResult.missing_invoices.length > 0 && (
-              <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 rounded-xl border border-amber-500/30 overflow-hidden">
+              <div className="bg-gradient-to-br from-gray-900/50 to-gray-900/50 rounded-xl border border-amber-500/30 overflow-hidden">
                 <div className="p-4 border-b border-gray-700/50 flex items-center justify-between">
                   <h3 className="text-lg font-semibold text-white flex items-center">
                     <AlertTriangle className="w-5 h-5 mr-2 text-amber-400" />
@@ -984,7 +984,7 @@ const ReconcileView = ({
 
             {/* Unmatched Entries */}
             {reconciliationResult.unmatched_manual?.length > 0 && (
-              <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 rounded-xl border border-red-500/30 overflow-hidden">
+              <div className="bg-gradient-to-br from-gray-900/50 to-gray-900/50 rounded-xl border border-red-500/30 overflow-hidden">
                 <div className="p-4 border-b border-gray-700/50">
                   <h3 className="text-lg font-semibold text-white flex items-center">
                     <XCircle className="w-5 h-5 mr-2 text-red-400" />
@@ -1029,7 +1029,7 @@ const ReconcileView = ({
             </div>
           </motion.div>
         ) : (
-          <div className="h-full flex items-center justify-center bg-gradient-to-br from-gray-800/30 to-gray-900/30 rounded-2xl border border-gray-700/30">
+          <div className="h-full flex items-center justify-center bg-gradient-to-br from-gray-900/30 to-gray-900/30 rounded-2xl border border-gray-700/30">
             <div className="text-center">
               <FileCheck className="w-16 h-16 mx-auto mb-4 text-gray-600" />
               <p className="text-gray-400 text-lg mb-2">Ready to Reconcile</p>
@@ -1175,7 +1175,7 @@ const InvoicesView = ({
       </div>
 
       {/* Invoices Table */}
-      <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 rounded-2xl border border-gray-700/50 backdrop-blur-xl overflow-hidden">
+      <div className="bg-gradient-to-br from-gray-900/50 to-gray-900/50 rounded-2xl border border-gray-700/50 backdrop-blur-xl overflow-hidden">
         <div className="p-4 border-b border-gray-700/50 flex items-center justify-between">
           <h2 className="text-xl font-bold text-white">Customer Invoices ({invoices.length})</h2>
           <button
@@ -1335,7 +1335,7 @@ const InvoiceDetailModal = ({ invoice, onClose, formatCurrency, formatDate, getS
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.95 }}
           onClick={(e) => e.stopPropagation()}
-          className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl border border-gray-700 max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+          className="bg-gradient-to-br from-gray-900 to-gray-900 rounded-2xl border border-gray-700 max-w-4xl w-full max-h-[90vh] overflow-y-auto"
         >
           <div className="p-6 border-b border-gray-700 flex items-center justify-between sticky top-0 bg-gray-800/95 backdrop-blur-xl z-10">
             <h2 className="text-2xl font-bold text-white">Invoice Details</h2>
@@ -1490,7 +1490,7 @@ const StatCard = ({ title, value, subtitle, icon: Icon, color }) => (
 );
 
 const ActivityCard = ({ title, icon: Icon, iconColor, items, renderItem }) => (
-  <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 rounded-2xl border border-gray-700/50 backdrop-blur-xl p-6">
+  <div className="bg-gradient-to-br from-gray-900/50 to-gray-900/50 rounded-2xl border border-gray-700/50 backdrop-blur-xl p-6">
     <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
       <Icon className={`w-5 h-5 mr-2 text-${iconColor}-400`} />
       {title}
@@ -1576,7 +1576,7 @@ const PaymentAdviceModal = ({ show, mode, paymentAdvice, customers, onClose, onC
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.95 }}
           onClick={(e) => e.stopPropagation()}
-          className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl border border-gray-700 max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+          className="bg-gradient-to-br from-gray-900 to-gray-900 rounded-2xl border border-gray-700 max-w-2xl w-full max-h-[90vh] overflow-y-auto"
         >
           <div className="p-6 border-b border-gray-700 flex items-center justify-between sticky top-0 bg-gray-800/95 backdrop-blur-xl z-10">
             <h2 className="text-2xl font-bold text-white">
@@ -1711,7 +1711,7 @@ const DeleteConfirmModal = ({ show, item, onConfirm, onCancel, loading }) => {
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.95 }}
           onClick={(e) => e.stopPropagation()}
-          className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl border border-red-500/30 max-w-md w-full p-6"
+          className="bg-gradient-to-br from-gray-900 to-gray-900 rounded-2xl border border-red-500/30 max-w-md w-full p-6"
         >
           <div className="flex items-start space-x-4">
             <div className="p-3 bg-red-500/20 rounded-xl">

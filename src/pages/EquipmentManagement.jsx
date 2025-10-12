@@ -25,6 +25,8 @@ const EquipmentManagement = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
+  const [equipmentWorkOrderHistory, setEquipmentWorkOrderHistory] = useState({});
+  const [loadingHistory, setLoadingHistory] = useState({});
   
   // New equipment form state
   const [newEquipment, setNewEquipment] = useState({
@@ -143,9 +145,29 @@ const EquipmentManagement = () => {
     setFilteredEquipment(filtered);
   }, [equipment, searchFilter, locationFilter, statusFilter]);
 
-  const handleViewDetails = (equip) => {
+  const handleViewDetails = async (equip) => {
     setSelectedEquipment(equip);
+    setLoadingHistory(prev => ({ ...prev, [equip.id]: true }));
+    
+    const history = await fetchEquipmentWorkOrderHistory(equip.id);
+    
+    setEquipmentWorkOrderHistory(prev => ({
+      ...prev,
+      [equip.id]: history
+    }));
+    
+    setLoadingHistory(prev => ({ ...prev, [equip.id]: false }));
     setShowDetailModal(true);
+  };
+
+  const fetchEquipmentWorkOrderHistory = async (equipmentId) => {
+    try {
+      const response = await api.get(`equipment/${equipmentId}/work-order-history/`);
+      return response.data;
+    } catch (err) {
+      console.error('Failed to fetch equipment work order history:', err);
+      return null;
+    }
   };
 
   const handleCreateEquipment = async (e) => {
@@ -908,18 +930,163 @@ const EquipmentManagement = () => {
                     </button>
                   </div>
                 </div>
-                
+    
                 {/* Production History */}
                 <div className="mt-6">
                   <h4 className="text-lg font-semibold text-white border-b border-gray-700/50 pb-2 mb-4">
-                    Production History
+                    Production Performance History
                   </h4>
                   
-                  <div className="bg-gray-800/30 rounded-xl p-4 text-center">
-                    <FileText className="w-8 h-8 mx-auto mb-2 text-gray-500" />
-                    <p className="text-gray-400">Production history data will be displayed here</p>
-                    <p className="text-sm text-gray-500">Connected to ProductionEntries API</p>
-                  </div>
+                  {selectedEquipment && equipmentWorkOrderHistory[selectedEquipment.id] ? (
+                    <div className="space-y-6">
+                      {/* Summary Stats */}
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div className="bg-gray-800/30 rounded-xl p-4 text-center">
+                          <div className="text-2xl font-bold text-blue-400">
+                            {equipmentWorkOrderHistory[selectedEquipment.id].summary?.total_work_orders || 0}
+                          </div>
+                          <div className="text-sm text-gray-400 mt-1">Total Work Orders</div>
+                        </div>
+                        
+                        <div className="bg-gray-800/30 rounded-xl p-4 text-center">
+                          <div className="text-2xl font-bold text-emerald-400">
+                            {equipmentWorkOrderHistory[selectedEquipment.id].summary?.completion_rate?.toFixed(1) || 0}%
+                          </div>
+                          <div className="text-sm text-gray-400 mt-1">Completion Rate</div>
+                        </div>
+                        
+                        <div className="bg-gray-800/30 rounded-xl p-4 text-center">
+                          <div className="text-2xl font-bold text-purple-400">
+                            {equipmentWorkOrderHistory[selectedEquipment.id].summary?.total_production || 0}
+                          </div>
+                          <div className="text-sm text-gray-400 mt-1">Total Production</div>
+                        </div>
+                        
+                        <div className="bg-gray-800/30 rounded-xl p-4 text-center">
+                          <div className="text-2xl font-bold text-amber-400">
+                            {equipmentWorkOrderHistory[selectedEquipment.id].summary?.avg_efficiency_pct?.toFixed(1) || 0}%
+                          </div>
+                          <div className="text-sm text-gray-400 mt-1">Avg Efficiency</div>
+                        </div>
+                      </div>
+
+                      {/* Work Orders List */}
+                      <div>
+                        <h5 className="text-md font-semibold text-white mb-3">Recent Work Orders</h5>
+                        <div className="space-y-3 max-h-96 overflow-y-auto">
+                          {equipmentWorkOrderHistory[selectedEquipment.id].work_orders?.map((wo, index) => (
+                            <motion.div
+                              key={wo.work_order_id}
+                              initial={{ opacity: 0, y: 10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ delay: index * 0.1 }}
+                              className="bg-gray-800/30 rounded-xl p-4 border border-gray-700/50"
+                            >
+                              <div className="flex justify-between items-start mb-3">
+                                <div>
+                                  <h6 className="font-semibold text-white">{wo.wo_number}</h6>
+                                  <p className="text-sm text-gray-400">{wo.product_name} ({wo.product_sku})</p>
+                                </div>
+                                <div className="text-right">
+                                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                    wo.status === 'completed' ? 'bg-emerald-500/10 text-emerald-400' :
+                                    wo.status === 'in_progress' ? 'bg-blue-500/10 text-blue-400' :
+                                    'bg-gray-500/10 text-gray-400'
+                                  }`}>
+                                    {wo.status.replace('_', ' ').toUpperCase()}
+                                  </span>
+                                  <p className="text-xs text-gray-400 mt-1">{wo.priority} Priority</p>
+                                </div>
+                              </div>
+
+                              {/* Progress Bar */}
+                              <div className="mb-3">
+                                <div className="flex justify-between text-sm mb-1">
+                                  <span className="text-gray-400">Progress</span>
+                                  <span className="text-white">{wo.completion_percentage?.toFixed(1)}%</span>
+                                </div>
+                                <div className="w-full bg-gray-700 rounded-full h-2">
+                                  <div 
+                                    className="h-2 rounded-full bg-gradient-to-r from-blue-500 to-purple-500" 
+                                    style={{ width: `${wo.completion_percentage}%` }}
+                                  />
+                                </div>
+                              </div>
+
+                              {/* Performance Metrics */}
+                              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                                <div>
+                                  <p className="text-gray-400">Produced</p>
+                                  <p className="text-white font-semibold">
+                                    {wo.equipment_performance?.total_produced_on_equipment}
+                                  </p>
+                                </div>
+                                <div>
+                                  <p className="text-gray-400">Rejected</p>
+                                  <p className="text-red-400 font-semibold">
+                                    {wo.equipment_performance?.total_rejected_on_equipment}
+                                  </p>
+                                </div>
+                                <div>
+                                  <p className="text-gray-400">Efficiency</p>
+                                  <p className="text-amber-400 font-semibold">
+                                    {wo.equipment_performance?.equipment_efficiency_pct}%
+                                  </p>
+                                </div>
+                                <div>
+                                  <p className="text-gray-400">Quality</p>
+                                  <p className="text-emerald-400 font-semibold">
+                                    {wo.equipment_performance?.quality_rate_pct}%
+                                  </p>
+                                </div>
+                              </div>
+
+                              {/* Timeline Preview */}
+                              {wo.production_timeline && wo.production_timeline.length > 0 && (
+                                <div className="mt-3 pt-3 border-t border-gray-700/50">
+                                  <p className="text-sm text-gray-400 mb-2">
+                                    Production Entries: {wo.production_timeline.length}
+                                  </p>
+                                  <div className="flex space-x-1 overflow-x-auto">
+                                    {wo.production_timeline.slice(0, 6).map((entry, idx) => (
+                                      <div
+                                        key={idx}
+                                        className="flex-shrink-0 w-3 h-3 rounded-full bg-blue-500 tooltip"
+                                        title={`${entry.quantity_produced} units on ${new Date(entry.entry_datetime).toLocaleDateString()}`}
+                                      />
+                                    ))}
+                                    {wo.production_timeline.length > 6 && (
+                                      <div className="flex-shrink-0 text-xs text-gray-500 self-center">
+                                        +{wo.production_timeline.length - 6} more
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+                            </motion.div>
+                          ))}
+                        </div>
+                        
+                        {(!equipmentWorkOrderHistory[selectedEquipment.id].work_orders || 
+                          equipmentWorkOrderHistory[selectedEquipment.id].work_orders.length === 0) && (
+                          <div className="text-center py-8 text-gray-400">
+                            <FileText className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                            <p>No production history found for this equipment</p>
+                            <p className="text-sm mt-1">This equipment hasn't been used in any work orders yet</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="bg-gray-800/30 rounded-xl p-6 text-center">
+                      <motion.div
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                        className="w-8 h-8 border-2 border-purple-500/30 border-t-purple-500 rounded-full mx-auto mb-3"
+                      />
+                      <p className="text-gray-400">Loading production history...</p>
+                    </div>
+                  )}
                 </div>
               </div>
             </motion.div>

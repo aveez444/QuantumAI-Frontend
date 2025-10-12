@@ -98,6 +98,7 @@ const Sidebar = () => {
         { name: 'Equipment', path: '/production/equipment' },
         { name: 'Employees', path: '/production/employees' },
         { name: 'Analysis', path: '/production/analysis' },
+        { name: 'Review & Inspection', path: '/production/review' },
       ]
     },
     {
