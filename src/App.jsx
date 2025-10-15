@@ -26,7 +26,6 @@ import StockReports from './pages/StockReports';
 import CustomerOrders from './pages/CustomerOrders';
 import CustomerInvoices from './pages/Invoice';
 import ReconciliationManagement from './pages/ReconciliationManagement';
-import InvoiceReconciliation from './pages/ReconciliationManagement';
 import ProductionReview from './pages/ProductionReview';
 
 function App() {
@@ -62,7 +61,7 @@ function App() {
         <Route path="/customer-order" element={<CustomerOrders />} />
 
         <Route path="/reconcile" element={<ReconciliationManagement />} />
-
+        
         <Route path="/ai/query" element={<AIAssistant />} />
 
         <Route path="/production/review" element={<ProductionReview />} />

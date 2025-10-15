@@ -343,7 +343,7 @@ const ProductionReview = () => {
                   value={productionSummary.total_produced?.toLocaleString() || 0}
                   label="Total Produced"
                   subtext={`${productionSummary.total_entries} entries`}
-                  color="purple"
+                  color="blue"
                   delay={0}
                 />
                 <MetricCard
@@ -359,7 +359,7 @@ const ProductionReview = () => {
                   value={productionSummary.avg_hourly_output?.toFixed(1) || 0}
                   label="Avg Hourly Output"
                   subtext="units per hour"
-                  color="emerald"
+                  color="blue"
                   delay={0.2}
                 />
                 <MetricCard
@@ -367,7 +367,7 @@ const ProductionReview = () => {
                   value={`${(productionSummary.total_downtime_minutes / 60)?.toFixed(1) || 0}h`}
                   label="Total Downtime"
                   subtext={`${productionSummary.total_downtime_minutes || 0} minutes`}
-                  color="amber"
+                  color="blue"
                   delay={0.3}
                 />
               </div>

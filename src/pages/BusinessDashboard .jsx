@@ -1231,8 +1231,8 @@ const BusinessDashboard = () => {
                   
                   <KPICard
                     title="Quality Rate"
-                    value={`${(100 - (dashboardData?.quality_metrics?.rejection_rate || 0)).toFixed(1)}%`}
-                    subtitle={`${formatNumber(dashboardData?.quality_metrics?.total_rejected)} rejected`}
+                    value={`${(100 - (dashboardData?.quality_metrics?.overall_rejection_rate_pct || 0)).toFixed(1)}%`}
+                    subtitle={`${formatNumber(dashboardData?.production_summary?.total_rejected)} rejected`}
                     icon={Shield}
                     color="from-purple-500 to-purple-600"
                     loading={loading}
@@ -1618,41 +1618,44 @@ const BusinessDashboard = () => {
                   <RejectionAnalysisWidget />
                 </div>
 
-                {/* Quick Actions */}
-                <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 rounded-2xl border border-gray-700/50 backdrop-blur-xl p-4 sm:p-6">
-                  <h3 className="text-lg sm:text-xl font-semibold mb-4 flex items-center">
-                    <Zap className="w-5 h-5 mr-2 text-purple-400" />
-                    Quick Actions
-                  </h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      className="bg-blue-600 hover:bg-blue-700 p-3 sm:p-4 rounded-xl text-center transition-colors active:scale-95"
-                    >
-                      <FileText className="w-8 h-8 mx-auto mb-2" />
-                      <p className="font-medium">Generate Report</p>
-                    </motion.button>
-                    
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      className="bg-purple-600 hover:bg-purple-700 p-4 rounded-xl text-center transition-colors active:scale-95"
-                    >
-                      <ShoppingCart className="w-8 h-8 mx-auto mb-2" />
-                      <p className="font-medium">Create Purchase Order</p>
-                    </motion.button>
-                    
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      className="bg-emerald-600 hover:bg-emerald-700 p-4 rounded-xl text-center transition-colors active:scale-95"
-                    >
-                      <ClipboardList className="w-8 h-8 mx-auto mb-2" />
-                      <p className="font-medium">New Work Order</p>
-                    </motion.button>
-                  </div>
-                </div>
+            {/* Quick Actions */}
+            <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 rounded-2xl border border-gray-700/50 backdrop-blur-xl p-4 sm:p-6">
+              <h3 className="text-lg sm:text-xl font-semibold mb-4 flex items-center">
+                <Zap className="w-5 h-5 mr-2 text-purple-400" />
+                Quick Actions
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => window.location.href = '/inventory/stock-reports'}
+                  className="bg-blue-600 hover:bg-blue-700 p-3 sm:p-4 rounded-xl text-center transition-colors active:scale-95 flex flex-col items-center justify-center"
+                >
+                  <FileText className="w-8 h-8 mx-auto mb-2" />
+                  <p className="font-medium">Generate Report</p>
+                </motion.button>
+                
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => window.location.href = '/inventory/stock-reports'}
+                  className="bg-purple-600 hover:bg-purple-700 p-4 rounded-xl text-center transition-colors active:scale-95 flex flex-col items-center justify-center"
+                >
+                  <ShoppingCart className="w-8 h-8 mx-auto mb-2" />
+                  <p className="font-medium">Create Purchase Order</p>
+                </motion.button>
+                
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => window.location.href = '/production/work-orders'}
+                  className="bg-emerald-600 hover:bg-emerald-700 p-4 rounded-xl text-center transition-colors active:scale-95 flex flex-col items-center justify-center"
+                >
+                  <ClipboardList className="w-8 h-8 mx-auto mb-2" />
+                  <p className="font-medium">New Work Order</p>
+                </motion.button>
+              </div>
+            </div>
               </motion.div>
             )}
           </AnimatePresence>
