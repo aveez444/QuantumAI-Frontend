@@ -19,6 +19,7 @@ const Products = () => {
   const [sortOrder, setSortOrder] = useState('asc');
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
+  const [productTypeFilter, setProductTypeFilter] = useState('all'); // NEW: Product type filter
   const [stockStatusFilter, setStockStatusFilter] = useState('all');
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [showProductModal, setShowProductModal] = useState(false);
@@ -31,13 +32,21 @@ const Products = () => {
   const [formData, setFormData] = useState({
     sku: '',
     product_name: '',
-    product_type: 'finished_good', // Changed from 'finished_goods'
+    product_type: 'finished_good',
     uom: 'pcs',
     category: '',
     standard_cost: '',
     reorder_point: '',
     specifications: ''
   });
+
+  // Product type options - NEW
+  const productTypeOptions = [
+    { value: 'raw_material', label: 'Raw Material' },
+    { value: 'semi_finished', label: 'Semi-Finished' },
+    { value: 'finished_good', label: 'Finished Good' },
+    { value: 'consumable', label: 'Consumable' }
+  ];
 
   useEffect(() => {
     fetchProducts();
@@ -68,11 +77,10 @@ const Products = () => {
       }
       setShowProductModal(false);
       setEditingProduct(null);
-      // Reset to correct default values
       setFormData({
         sku: '',
         product_name: '',
-        product_type: 'finished_good', // Changed from 'finished_goods'
+        product_type: 'finished_good',
         uom: 'pcs',
         category: '',
         standard_cost: '',
@@ -87,12 +95,12 @@ const Products = () => {
   };
 
   const handleEditProduct = (product) => {
-    console.log('Editing product:', product); // Debug log
+    console.log('Editing product:', product);
     setEditingProduct(product);
     setFormData({
       sku: product.sku,
       product_name: product.product_name,
-      product_type: product.product_type, // This should match your Django choices
+      product_type: product.product_type,
       uom: product.uom,
       category: product.category,
       standard_cost: product.standard_cost,
@@ -140,7 +148,13 @@ const Products = () => {
     return { status: 'in-stock', color: 'text-emerald-400', bg: 'bg-emerald-500/10' };
   };
 
-  // Filter and sort products
+  // Get product type display info - NEW
+  const getProductTypeInfo = (productType) => {
+    const type = productTypeOptions.find(opt => opt.value === productType);
+    return type || { value: productType, label: productType };
+  };
+
+  // Filter and sort products - UPDATED with product type filter
   const filteredProducts = products
     .filter(product => {
       const matchesSearch = product.sku.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -148,10 +162,12 @@ const Products = () => {
       
       const matchesCategory = categoryFilter === 'all' || product.category === categoryFilter;
       
+      const matchesProductType = productTypeFilter === 'all' || product.product_type === productTypeFilter; // NEW
+      
       const stockStatus = getStockStatus(product.current_stock, product.reorder_point);
       const matchesStockStatus = stockStatusFilter === 'all' || stockStatus.status === stockStatusFilter;
       
-      return matchesSearch && matchesCategory && matchesStockStatus;
+      return matchesSearch && matchesCategory && matchesProductType && matchesStockStatus;
     })
     .sort((a, b) => {
       let aValue, bValue;
@@ -171,6 +187,9 @@ const Products = () => {
       } else if (sortBy === 'cost') {
         aValue = a.standard_cost;
         bValue = b.standard_cost;
+      } else if (sortBy === 'type') { // NEW: Sort by product type
+        aValue = getProductTypeInfo(a.product_type).label;
+        bValue = getProductTypeInfo(b.product_type).label;
       }
       
       if (typeof aValue === 'string') {
@@ -183,6 +202,7 @@ const Products = () => {
     });
 
   const categories = [...new Set(products.map(p => p.category).filter(Boolean))];
+  const productTypes = [...new Set(products.map(p => p.product_type).filter(Boolean))]; // NEW
 
   if (loading) {
     return (
@@ -240,9 +260,9 @@ const Products = () => {
 
         {/* Main Content */}
         <div className="p-6">
-          {/* Filters and Controls */}
+          {/* Filters and Controls - UPDATED with product type filter */}
           <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 rounded-2xl border border-gray-700/50 backdrop-blur-xl p-6 mb-6">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4"> {/* Changed to 5 columns */}
               {/* Search */}
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -265,6 +285,20 @@ const Products = () => {
                   <option value="all">All Categories</option>
                   {categories.map(category => (
                     <option key={category} value={category}>{category}</option>
+                  ))}
+                </select>
+              </div>
+              
+              {/* Product Type Filter - NEW */}
+              <div>
+                <select
+                  value={productTypeFilter}
+                  onChange={(e) => setProductTypeFilter(e.target.value)}
+                  className="w-full bg-gray-800/50 border border-gray-700 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                >
+                  <option value="all">All Types</option>
+                  {productTypeOptions.map(type => (
+                    <option key={type.value} value={type.value}>{type.label}</option>
                   ))}
                 </select>
               </div>
@@ -300,12 +334,13 @@ const Products = () => {
               </div>
             </div>
             
-            {/* Sort Options */}
+            {/* Sort Options - UPDATED with product type sort */}
             <div className="flex items-center space-x-4 mt-4">
               <span className="text-sm text-gray-400">Sort by:</span>
               {[
                 { key: 'sku', label: 'SKU', icon: Hash },
                 { key: 'name', label: 'Name', icon: Tag },
+                { key: 'type', label: 'Type', icon: Package }, // NEW
                 { key: 'stock', label: 'Stock', icon: Package },
                 { key: 'value', label: 'Value', icon: DollarSign },
                 { key: 'cost', label: 'Cost', icon: DollarSign }
@@ -349,6 +384,7 @@ const Products = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {filteredProducts.map(product => {
                 const stockStatus = getStockStatus(product.current_stock, product.reorder_point);
+                const productTypeInfo = getProductTypeInfo(product.product_type); // NEW
                 
                 return (
                   <motion.div
@@ -356,7 +392,7 @@ const Products = () => {
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
                     className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 rounded-2xl border border-gray-700/50 backdrop-blur-xl p-5 group hover:border-purple-500/30 transition-all"
-                    onClick={() => handleViewProduct(product)} // ADD THIS LINE
+                    onClick={() => handleViewProduct(product)}
                   >
                     <div className="flex items-start justify-between mb-4">
                       <div className={`p-2 rounded-lg ${stockStatus.bg}`}>
@@ -370,7 +406,7 @@ const Products = () => {
                           }}
                           className="p-1 hover:bg-gray-700/50 rounded"
                         >
-                          <Eye className="w-4 h-4 text-green-400" /> {/* ADD THIS BUTTON */}
+                          <Eye className="w-4 h-4 text-green-400" />
                         </button>
                         <button
                           onClick={(e) => {
@@ -396,6 +432,13 @@ const Products = () => {
                     
                     <h3 className="font-semibold text-white mb-1 truncate">{product.product_name}</h3>
                     <p className="text-sm text-gray-400 mb-3">{product.sku}</p>
+                    
+                    {/* Product Type Badge - NEW */}
+                    <div className="mb-3">
+                      <span className="text-xs bg-blue-500/20 text-blue-300 px-2 py-1 rounded-lg">
+                        {productTypeInfo.label}
+                      </span>
+                    </div>
                     
                     <div className="space-y-2 mb-4">
                       <div className="flex justify-between items-center">
@@ -436,6 +479,7 @@ const Products = () => {
                   <tr className="border-b border-gray-700/50">
                     <th className="text-left py-3 px-4 text-sm text-gray-400 font-medium">SKU</th>
                     <th className="text-left py-3 px-4 text-sm text-gray-400 font-medium">Product Name</th>
+                    <th className="text-left py-3 px-4 text-sm text-gray-400 font-medium">Type</th> {/* NEW */}
                     <th className="text-left py-3 px-4 text-sm text-gray-400 font-medium">Category</th>
                     <th className="text-left py-3 px-4 text-sm text-gray-400 font-medium">Stock</th>
                     <th className="text-left py-3 px-4 text-sm text-gray-400 font-medium">Unit Cost</th>
@@ -447,6 +491,7 @@ const Products = () => {
                 <tbody>
                   {filteredProducts.map(product => {
                     const stockStatus = getStockStatus(product.current_stock, product.reorder_point);
+                    const productTypeInfo = getProductTypeInfo(product.product_type); // NEW
                     
                     return (
                       <motion.tr 
@@ -457,6 +502,11 @@ const Products = () => {
                       >
                         <td className="py-3 px-4 text-white font-mono">{product.sku}</td>
                         <td className="py-3 px-4 text-white">{product.product_name}</td>
+                        <td className="py-3 px-4"> {/* NEW */}
+                          <span className="text-blue-300 text-sm bg-blue-500/20 px-2 py-1 rounded-lg">
+                            {productTypeInfo.label}
+                          </span>
+                        </td>
                         <td className="py-3 px-4 text-gray-400">{product.category || '-'}</td>
                         <td className="py-3 px-4">
                           <span className={stockStatus.color}>
@@ -472,12 +522,12 @@ const Products = () => {
                         </td>
                         <td className="py-3 px-4 text-right">
                           <div className="flex items-center justify-end space-x-2">
-                          <button
-                            onClick={() => handleViewProduct(product)}
-                            className="p-1 hover:bg-gray-700/50 rounded text-green-400"
-                          >
-                            <Eye className="w-4 h-4" /> {/* ADD THIS BUTTON */}
-                          </button>
+                            <button
+                              onClick={() => handleViewProduct(product)}
+                              className="p-1 hover:bg-gray-700/50 rounded text-green-400"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </button>
                             <button
                               onClick={() => handleEditProduct(product)}
                               className="p-1 hover:bg-gray-700/50 rounded text-blue-400"
@@ -567,6 +617,7 @@ const Products = () => {
           )}
         </div>
       </div>
+
 
       {/* Add/Edit Product Modal */}
       <AnimatePresence>
