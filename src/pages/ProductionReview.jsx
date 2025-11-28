@@ -1,14 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Activity, Users, Package, Calendar, Download, RefreshCw, Search,
   Clock, Target, Award, Zap, Eye, X, Grid, List, User, Cpu,
   TrendingUp, Factory, CheckCircle, XCircle, AlertCircle, ArrowRight,
-  BarChart3, Box, Layers, Settings, Filter
+  BarChart3, Box, Layers, Settings, Filter, PieChart, LineChart as LineChartIcon,
+  BarChart3 as BarChartIcon, TrendingDown, Sparkles, Brain
 } from 'lucide-react';
 import {
   LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid,
-  Tooltip, Legend, ResponsiveContainer, Area, AreaChart
+  Tooltip, Legend, ResponsiveContainer, Area, AreaChart, PieChart as RechartsPieChart,
+  Pie, Cell, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
+  ComposedChart, Scatter, ScatterChart  // Add ScatterChart here
 } from 'recharts';
 import Sidebar from '../components/Sidebar';
 import api from '../utils/api';
@@ -28,11 +31,16 @@ const ProductionReview = () => {
   const [employeeData, setEmployeeData] = useState([]);
   const [equipmentData, setEquipmentData] = useState([]);
   const [workOrderData, setWorkOrderData] = useState([]);
+  const [analyticsData, setAnalyticsData] = useState(null);
+  const [selectedAlert, setSelectedAlert] = useState(null);
+  const [showAlertModal, setShowAlertModal] = useState(false);
   
   const [filters, setFilters] = useState({
     searchTerm: '',
     minEfficiency: 0,
-    showOnlyIssues: false
+    showOnlyIssues: false,
+    department: 'all',
+    shift: 'all'
   });
 
   const [selectedEmployee, setSelectedEmployee] = useState(null);
@@ -40,6 +48,7 @@ const ProductionReview = () => {
   const [selectedWorkOrder, setSelectedWorkOrder] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [detailLoading, setDetailLoading] = useState(false);
+  const [chartTimeframe, setChartTimeframe] = useState('30d');
 
   useEffect(() => {
     fetchAllData();
@@ -50,17 +59,19 @@ const ProductionReview = () => {
     try {
       const params = new URLSearchParams(dateRange).toString();
       
-      const summaryRes = await api.get(`/analytics/production-summary/?${params}`);
+      const [summaryRes, employeeRes, equipmentRes, workOrderRes, analyticsRes] = await Promise.all([
+        api.get(`/analytics/production-summary/?${params}`),
+        api.get(`/analytics/employees/?${params}`),
+        api.get(`/analytics/equipment/?${params}`),
+        api.get(`/analytics/workorders/?${params}`),
+        api.get(`/analytics/detailed-analytics/?${params}&timeframe=${chartTimeframe}`)
+      ]);
+
       setProductionSummary(summaryRes.data);
-
-      const employeeRes = await api.get(`/analytics/employees/?${params}`);
       setEmployeeData(employeeRes.data.employees || []);
-
-      const equipmentRes = await api.get(`/analytics/equipment/?${params}`);
       setEquipmentData(equipmentRes.data.equipment || []);
-
-      const workOrderRes = await api.get(`/analytics/workorders/?${params}`);
       setWorkOrderData(workOrderRes.data.work_orders || []);
+      setAnalyticsData(analyticsRes.data);
 
     } catch (err) {
       console.error('Error fetching data:', err);
@@ -68,6 +79,16 @@ const ProductionReview = () => {
       setLoading(false);
       setRefreshing(false);
     }
+  };
+
+  const handleViewAlertDetails = (alert) => {
+  setSelectedAlert(alert);
+  setShowAlertModal(true);
+};
+
+  const closeAlertModal = () => {
+    setShowAlertModal(false);
+    setSelectedAlert(null);
   };
 
   const fetchEmployeeDetail = async (employeeId) => {
@@ -137,6 +158,19 @@ const ProductionReview = () => {
     }
   };
 
+  // Enhanced analytics calculations
+  const analyticsMetrics = useMemo(() => {
+    if (!analyticsData) return null;
+
+    return {
+      overallEfficiency: analyticsData.overall_efficiency || 0,
+      qualityTrend: analyticsData.quality_trend || 0,
+      productivityIndex: analyticsData.productivity_index || 0,
+      utilizationRate: analyticsData.utilization_rate || 0,
+      performanceScore: analyticsData.performance_score || 0
+    };
+  }, [analyticsData]);
+
   const getFilteredEmployees = () => {
     let filtered = employeeData;
     
@@ -156,6 +190,12 @@ const ProductionReview = () => {
     if (filters.showOnlyIssues) {
       filtered = filtered.filter(emp => 
         (emp.quality_rate_pct || 100) < 90
+      );
+    }
+    
+    if (filters.department !== 'all') {
+      filtered = filtered.filter(emp => 
+        emp.department === filters.department
       );
     }
     
@@ -209,6 +249,18 @@ const ProductionReview = () => {
     return 'text-red-400';
   };
 
+  const getTrendColor = (trend) => {
+    if (trend > 0) return 'text-emerald-400';
+    if (trend < 0) return 'text-red-400';
+    return 'text-gray-400';
+  };
+
+  const getTrendIcon = (trend) => {
+    if (trend > 0) return <TrendingUp className="w-4 h-4" />;
+    if (trend < 0) return <TrendingDown className="w-4 h-4" />;
+    return <Activity className="w-4 h-4" />;
+  };
+
   const closeModal = () => {
     setShowDetailModal(false);
     setSelectedEmployee(null);
@@ -243,7 +295,7 @@ const ProductionReview = () => {
                   animate={{ opacity: 1, y: 0 }}
                   className="text-2xl sm:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 via-blue-400 to-emerald-400"
                 >
-                  Production Review & Analytics
+                  Production Intelligence Dashboard
                 </motion.h1>
                 <p className="text-gray-400 mt-1 text-sm">
                   {dateRange.start_date} to {dateRange.end_date}
@@ -309,10 +361,11 @@ const ProductionReview = () => {
             {/* Tabs */}
             <div className="flex gap-2 mt-4 overflow-x-auto pb-2 scrollbar-hide">
               {[
-                { id: 'overview', label: 'Overview', icon: Activity },
+                { id: 'overview', label: 'Business Intelligence', icon: Brain },
                 { id: 'employees', label: 'Employees', icon: Users },
                 { id: 'equipment', label: 'Equipment', icon: Cpu },
-                { id: 'workorders', label: 'Work Orders', icon: Package }
+                { id: 'workorders', label: 'Work Orders', icon: Package },
+               
               ].map(tab => (
                 <button
                   key={tab.id}
@@ -333,74 +386,32 @@ const ProductionReview = () => {
 
         {/* Main Content */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-6">
-          {/* Overview Tab */}
-          {activeTab === 'overview' && productionSummary && (
-            <div className="space-y-4 sm:space-y-6">
-              {/* Key Metrics */}
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
-                <MetricCard
-                  icon={Package}
-                  value={productionSummary.total_produced?.toLocaleString() || 0}
-                  label="Total Produced"
-                  subtext={`${productionSummary.total_entries} entries`}
-                  color="blue"
-                  delay={0}
-                />
-                <MetricCard
-                  icon={Target}
-                  value={`${productionSummary.yield_pct?.toFixed(1) || 0}%`}
-                  label="Quality Yield"
-                  subtext={`${productionSummary.total_rejected?.toLocaleString() || 0} rejected`}
-                  color="blue"
-                  delay={0.1}
-                />
-                <MetricCard
-                  icon={Zap}
-                  value={productionSummary.avg_hourly_output?.toFixed(1) || 0}
-                  label="Avg Hourly Output"
-                  subtext="units per hour"
-                  color="blue"
-                  delay={0.2}
-                />
-                <MetricCard
-                  icon={Clock}
-                  value={`${(productionSummary.total_downtime_minutes / 60)?.toFixed(1) || 0}h`}
-                  label="Total Downtime"
-                  subtext={`${productionSummary.total_downtime_minutes || 0} minutes`}
-                  color="blue"
-                  delay={0.3}
-                />
-              </div>
+          {/* Business Intelligence Tab */}
+          {activeTab === 'overview' && productionSummary && analyticsData && (
+            <BIDashboard 
+              productionSummary={productionSummary}
+              analyticsData={analyticsData}
+              analyticsMetrics={analyticsMetrics}
+              chartTimeframe={chartTimeframe}
+              setChartTimeframe={setChartTimeframe}
+              getEfficiencyColor={getEfficiencyColor}
+              getQualityColor={getQualityColor}
+              getTrendColor={getTrendColor}
+              getTrendIcon={getTrendIcon}
+              onEmployeeClick={fetchEmployeeDetail}
+              onEquipmentClick={fetchEquipmentDetail}
+              onWorkOrderClick={fetchWorkOrderDetail}
+              onViewAlertDetails={handleViewAlertDetails} 
+            />
+          )}
 
-              {/* Top Performers */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-                <TopPerformersList
-                  title="Top Operators"
-                  icon={Award}
-                  iconColor="emerald"
-                  data={productionSummary.top_operators}
-                  onItemClick={fetchEmployeeDetail}
-                  idKey="operator_id"
-                  nameKey="operator_name"
-                />
-                <TopPerformersList
-                  title="Top Equipment"
-                  icon={Cpu}
-                  iconColor="blue"
-                  data={productionSummary.top_equipment}
-                  onItemClick={fetchEquipmentDetail}
-                  idKey="equipment_id"
-                  nameKey="equipment_code"
-                />
-              </div>
-
-              {/* Work Orders Summary */}
-              <WorkOrdersTable
-                data={productionSummary.work_orders_summary}
-                onViewDetail={fetchWorkOrderDetail}
-                getQualityColor={getQualityColor}
-              />
-            </div>
+          {/* Advanced Analytics Tab */}
+          {activeTab === 'analytics' && analyticsData && (
+            <AdvancedAnalytics 
+              analyticsData={analyticsData}
+              getEfficiencyColor={getEfficiencyColor}
+              getQualityColor={getQualityColor}
+            />
           )}
 
           {/* Employees Tab */}
@@ -452,9 +463,478 @@ const ProductionReview = () => {
         getQualityColor={getQualityColor}
         getEfficiencyColor={getEfficiencyColor}
       />
+
+      {/* Alert Detail Modal */}
+      <AlertDetailModal
+        alert={selectedAlert}
+        show={showAlertModal}
+        onClose={() => {
+          setShowAlertModal(false);
+          setSelectedAlert(null);
+        }}
+        onViewEquipment={(equipmentId) => {
+          setShowAlertModal(false);
+          fetchEquipmentDetail(equipmentId);
+        }}
+        onViewWorkOrder={(workOrderId) => {
+          setShowAlertModal(false);
+          fetchWorkOrderDetail(workOrderId);
+        }}
+      />
     </div>
   );
 };
+
+// Component: BI Dashboard
+const BIDashboard = ({ 
+  productionSummary, 
+  analyticsData, 
+  analyticsMetrics, 
+  chartTimeframe, 
+  setChartTimeframe,
+  getEfficiencyColor,
+  getQualityColor,
+  getTrendColor,
+  getTrendIcon,
+  onEmployeeClick,
+  onEquipmentClick,
+  onWorkOrderClick,
+  onViewAlertDetails  // Add this prop 
+}) => (
+  <div className="space-y-6">
+    {/* KPI Cards with Trends */}
+    <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+      <KPICard
+        title="Overall Efficiency"
+        value={`${analyticsMetrics.overallEfficiency}%`}
+        trend={analyticsMetrics.overallEfficiency - 85}
+        icon={Zap}
+        color="purple"
+        delay={0}
+      />
+      <KPICard
+        title="Quality Yield"
+        value={`${productionSummary.yield_pct?.toFixed(1)}%`}
+        trend={analyticsMetrics.qualityTrend}
+        icon={Target}
+        color="emerald"
+        delay={0.1}
+      />
+      <KPICard
+        title="Productivity Index"
+        value={analyticsMetrics.productivityIndex.toFixed(1)}
+        trend={analyticsMetrics.productivityIndex - 1.0}
+        icon={TrendingUp}
+        color="blue"
+        delay={0.2}
+      />
+      <KPICard
+        title="Utilization Rate"
+        value={`${analyticsMetrics.utilizationRate}%`}
+        trend={analyticsMetrics.utilizationRate - 75}
+        icon={Activity}
+        color="amber"
+        delay={0.3}
+      />
+      <KPICard
+        title="Performance Score"
+        value={analyticsMetrics.performanceScore.toFixed(0)}
+        trend={analyticsMetrics.performanceScore - 80}
+        icon={Award}
+        color="cyan"
+        delay={0.4}
+      />
+    </div>
+
+    {/* Charts Row 1 */}
+    <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+      {/* Production Trend Chart */}
+      <ChartCard
+        title="Production Trend"
+        icon={BarChartIcon}
+        timeframe={chartTimeframe}
+        onTimeframeChange={setChartTimeframe}
+      >
+        <ResponsiveContainer width="100%" height={300}>
+          <BarChart data={analyticsData.production_trend}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+            <XAxis dataKey="date" stroke="#6B7280" fontSize={12} />
+            <YAxis stroke="#6B7280" fontSize={12} />
+            <Tooltip 
+              contentStyle={{ backgroundColor: '#1F2937', border: '1px solid #374151', borderRadius: '8px' }}
+              labelStyle={{ color: '#D1D5DB' }}
+            />
+            <Bar dataKey="production" fill="#8884d8" radius={[4, 4, 0, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
+      </ChartCard>
+
+      {/* Quality vs Efficiency Scatter */}
+      <ChartCard
+        title="Quality vs Efficiency Analysis"
+        icon={BarChartIcon}
+        timeframe={chartTimeframe}
+        onTimeframeChange={setChartTimeframe}
+      >
+        <ResponsiveContainer width="100%" height={300}>
+          <ScatterChart data={analyticsData.quality_efficiency_correlation}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+            <XAxis 
+              type="number" 
+              dataKey="efficiency" 
+              name="Efficiency %" 
+              stroke="#6B7280" 
+              fontSize={12}
+              domain={[60, 100]}
+            />
+            <YAxis 
+              type="number" 
+              dataKey="quality" 
+              name="Quality %" 
+              stroke="#6B7280" 
+              fontSize={12}
+              domain={[80, 100]}
+            />
+            <Tooltip 
+              contentStyle={{ backgroundColor: '#1F2937', border: '1px solid #374151', borderRadius: '8px' }}
+              labelStyle={{ color: '#D1D5DB' }}
+            />
+            <Scatter name="Equipment" dataKey="quality" fill="#8884d8" />
+          </ScatterChart>
+        </ResponsiveContainer>
+      </ChartCard>
+    </div>
+
+  {/* Performance Progress */}
+<ChartCard
+  title="Performance Metrics"
+  icon={Target}
+  timeframe={chartTimeframe}
+  onTimeframeChange={setChartTimeframe}
+>
+  <div className="space-y-6 py-4">
+    {analyticsData.performance_radar?.map((metric, index) => (
+      <div key={index} className="space-y-2">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className={`p-2 rounded-lg ${
+              index === 0 ? 'bg-purple-500/20' :
+              index === 1 ? 'bg-emerald-500/20' :
+              index === 2 ? 'bg-blue-500/20' :
+              index === 3 ? 'bg-amber-500/20' : 'bg-cyan-500/20'
+            }`}>
+              {index === 0 && <Zap className="w-4 h-4 text-purple-400" />}
+              {index === 1 && <Target className="w-4 h-4 text-emerald-400" />}
+              {index === 2 && <TrendingUp className="w-4 h-4 text-blue-400" />}
+              {index === 3 && <Activity className="w-4 h-4 text-amber-400" />}
+              {index === 4 && <Award className="w-4 h-4 text-cyan-400" />}
+            </div>
+            <span className="text-sm font-medium text-white capitalize">{metric.subject}</span>
+          </div>
+          <span className="text-white font-bold">{metric.A}%</span>
+        </div>
+        <div className="w-full bg-gray-700 rounded-full h-3">
+          <div 
+            className={`h-3 rounded-full ${
+              index === 0 ? 'bg-gradient-to-r from-purple-500 to-purple-600' :
+              index === 1 ? 'bg-gradient-to-r from-emerald-500 to-emerald-600' :
+              index === 2 ? 'bg-gradient-to-r from-blue-500 to-blue-600' :
+              index === 3 ? 'bg-gradient-to-r from-amber-500 to-amber-600' :
+              'bg-gradient-to-r from-cyan-500 to-cyan-600'
+            }`}
+            style={{ width: `${metric.A}%` }}
+          ></div>
+        </div>
+        <div className="flex justify-between text-xs text-gray-400">
+          <span>0%</span>
+          <span>Target: {metric.B}%</span>
+          <span>100%</span>
+        </div>
+      </div>
+    ))}
+  </div>
+</ChartCard>
+
+      {/* Real-time Metrics */}
+      <div className="bg-gray-800/50 rounded-2xl p-6 border border-gray-700/50">
+        <h3 className="text-lg font-semibold mb-4 flex items-center">
+          <Sparkles className="w-5 h-5 mr-2 text-purple-400" />
+          Real-time Insights
+        </h3>
+        <div className="space-y-4">
+          {analyticsData.real_time_insights?.map((insight, idx) => (
+            <motion.div
+              key={idx}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: idx * 0.1 }}
+              className="p-3 bg-gray-900/50 rounded-lg border border-gray-700/30"
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-white">{insight.metric}</span>
+                <span className={`text-xs font-bold ${getTrendColor(insight.trend)}`}>
+                  {insight.trend > 0 ? '+' : ''}{insight.trend}%
+                </span>
+              </div>
+              <p className="text-xs text-gray-400 mt-1">{insight.description}</p>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+
+
+      {/* Top Performers & Alerts */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        <TopPerformersList
+          title="Top Operators"
+          icon={Award}
+          iconColor="emerald"
+          data={productionSummary.top_operators}
+          onItemClick={onEmployeeClick}
+          idKey="operator_id"
+          nameKey="operator_name"
+          metricKey="produced"
+        />
+        
+        <TopPerformersList
+          title="Top Equipment"
+          icon={Cpu}
+          iconColor="blue"
+          data={productionSummary.top_equipment}
+          onItemClick={onEquipmentClick}
+          idKey="equipment_id"
+          nameKey="equipment_code"
+          metricKey="produced"
+        />
+      </div>
+
+      {/* Work Orders Summary */}
+      <div className="mt-6">
+        <WorkOrdersTable
+          data={productionSummary.work_orders_summary}
+          onViewDetail={onWorkOrderClick}
+          getQualityColor={getQualityColor}
+        />
+      </div>
+
+          {/* Alerts Panel */}
+      <div className="mt-6">
+        <AlertPanel 
+          alerts={analyticsData.alerts} 
+          onViewDetails={onViewAlertDetails}  
+        />
+      </div>
+    </div>
+);
+
+// Component: Advanced Analytics
+const AdvancedAnalytics = ({ analyticsData, getEfficiencyColor, getQualityColor }) => (
+  <div className="space-y-6">
+    {/* Statistical Analysis */}
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <ChartCard title="Production Distribution" icon={BarChartIcon}>
+        <ResponsiveContainer width="100%" height={300}>
+          <BarChart data={analyticsData.production_distribution}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+            <XAxis dataKey="range" stroke="#6B7280" fontSize={12} />
+            <YAxis stroke="#6B7280" fontSize={12} />
+            <Tooltip 
+              contentStyle={{ backgroundColor: '#1F2937', border: '1px solid #374151', borderRadius: '8px' }}
+            />
+            <Bar dataKey="count" fill="#8884d8" radius={[4, 4, 0, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
+      </ChartCard>
+
+      <ChartCard title="Efficiency Correlation" icon={LineChartIcon}>
+        <ResponsiveContainer width="100%" height={300}>
+          <ComposedChart data={analyticsData.correlation_analysis}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+            <XAxis dataKey="efficiency" stroke="#6B7280" fontSize={12} />
+            <YAxis stroke="#6B7280" fontSize={12} />
+            <Tooltip 
+              contentStyle={{ backgroundColor: '#1F2937', border: '1px solid #374151', borderRadius: '8px' }}
+            />
+            <Bar dataKey="frequency" fill="#374151" />
+            <Line type="monotone" dataKey="quality" stroke="#10B981" strokeWidth={2} />
+          </ComposedChart>
+        </ResponsiveContainer>
+      </ChartCard>
+    </div>
+
+    {/* Predictive Analytics */}
+    <div className="bg-gray-800/50 rounded-2xl p-6 border border-gray-700/50">
+      <h3 className="text-lg font-semibold mb-4 flex items-center">
+        <Brain className="w-5 h-5 mr-2 text-purple-400" />
+        Predictive Insights
+      </h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {analyticsData.predictive_insights?.map((insight, idx) => (
+          <motion.div
+            key={idx}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: idx * 0.1 }}
+            className="p-4 bg-gradient-to-br from-gray-900/50 to-gray-800/30 rounded-xl border border-gray-700/30"
+          >
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium text-white">{insight.metric}</span>
+              <span className={`text-xs font-bold ${
+                insight.prediction > 0 ? 'text-emerald-400' : 'text-red-400'
+              }`}>
+                {insight.prediction > 0 ? '+' : ''}{insight.prediction}%
+              </span>
+            </div>
+            <p className="text-xs text-gray-400">{insight.timeframe}</p>
+            <div className="mt-2 w-full bg-gray-700 rounded-full h-2">
+              <div 
+                className="h-2 rounded-full bg-gradient-to-r from-blue-500 to-purple-500"
+                style={{ width: `${Math.abs(insight.confidence)}%` }}
+              />
+            </div>
+            <p className="text-xs text-gray-400 mt-1">Confidence: {insight.confidence}%</p>
+          </motion.div>
+        ))}
+      </div>
+    </div>
+  </div>
+);
+
+// Component: KPI Card with Trends
+const KPICard = ({ title, value, trend, icon: Icon, color, delay }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ delay }}
+    className={`bg-gradient-to-br from-${color}-900/30 to-${color}-800/20 rounded-2xl p-6 border border-${color}-500/20`}
+  >
+    <div className="flex items-center justify-between mb-4">
+      <div className={`p-3 bg-${color}-500/20 rounded-xl`}>
+        <Icon className={`w-6 h-6 text-${color}-400`} />
+      </div>
+      <div className={`flex items-center gap-1 ${trend > 0 ? 'text-emerald-400' : trend < 0 ? 'text-red-400' : 'text-gray-400'}`}>
+        {trend > 0 ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
+        <span className="text-sm font-bold">{trend > 0 ? '+' : ''}{trend}%</span>
+      </div>
+    </div>
+    <h3 className="text-gray-400 text-sm font-medium mb-2">{title}</h3>
+    <div className="text-2xl font-bold text-white">{value}</div>
+  </motion.div>
+);
+
+// Component: Chart Card
+const ChartCard = ({ title, icon: Icon, children, timeframe, onTimeframeChange }) => (
+  <div className="bg-gray-800/50 rounded-2xl p-6 border border-gray-700/50">
+    <div className="flex items-center justify-between mb-6">
+      <h3 className="text-lg font-semibold flex items-center">
+        <Icon className="w-5 h-5 mr-2 text-purple-400" />
+        {title}
+      </h3>
+      {onTimeframeChange && (
+        <div className="flex bg-gray-900 rounded-lg p-1">
+          {['7d', '30d', '90d', '1y'].map((period) => (
+            <button
+              key={period}
+              onClick={() => onTimeframeChange(period)}
+              className={`px-3 py-1 text-xs rounded-md transition-colors ${
+                timeframe === period 
+                  ? 'bg-purple-600 text-white' 
+                  : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              {period}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+    {children}
+  </div>
+);
+
+// Component: Alert Panel
+const AlertPanel = ({ alerts, onViewDetails }) => (
+  <div className="bg-gray-800/50 rounded-2xl p-6 border border-gray-700/50">
+    <h3 className="text-lg font-semibold mb-4 flex items-center">
+      <AlertCircle className="w-5 h-5 mr-2 text-amber-400" />
+      Active Alerts ({alerts?.length || 0})
+    </h3>
+    <div className="space-y-3">
+      {alerts?.map((alert, idx) => (
+        <motion.div
+          key={idx}
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: idx * 0.1 }}
+          className={`p-4 rounded-xl border ${
+            alert.severity === 'CRITICAL' 
+              ? 'bg-gradient-to-r from-red-900/20 to-red-800/10 border-red-500/30' 
+              : alert.severity === 'HIGH'
+              ? 'bg-gradient-to-r from-orange-900/20 to-amber-900/10 border-orange-500/30'
+              : 'bg-gradient-to-r from-yellow-900/20 to-yellow-800/10 border-yellow-500/30'
+          }`}
+        >
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-3">
+              <div className={`p-2 rounded-lg ${
+                alert.severity === 'CRITICAL' ? 'bg-red-500/20' :
+                alert.severity === 'HIGH' ? 'bg-orange-500/20' : 'bg-yellow-500/20'
+              }`}>
+                {alert.severity === 'CRITICAL' && <XCircle className="w-4 h-4 text-red-400" />}
+                {alert.severity === 'HIGH' && <AlertCircle className="w-4 h-4 text-orange-400" />}
+                {alert.severity === 'MEDIUM' && <AlertCircle className="w-4 h-4 text-yellow-400" />}
+              </div>
+              <div>
+                <span className="text-sm font-medium text-white">{alert.equipment_code}</span>
+                <span className={`ml-2 text-xs font-bold px-2 py-1 rounded-full ${
+                  alert.severity === 'CRITICAL' ? 'bg-red-500/20 text-red-400' :
+                  alert.severity === 'HIGH' ? 'bg-orange-500/20 text-orange-400' : 'bg-yellow-500/20 text-yellow-400'
+                }`}>
+                  {alert.severity}
+                </span>
+              </div>
+            </div>
+            <span className={`text-xs font-bold ${
+              alert.severity === 'CRITICAL' ? 'text-red-400' :
+              alert.severity === 'HIGH' ? 'text-orange-400' : 'text-yellow-400'
+            }`}>
+              {alert.alert_type}
+            </span>
+          </div>
+          <p className="text-sm text-gray-300 mb-3">{alert.message}</p>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4 text-xs text-gray-400">
+              <span className="flex items-center gap-1">
+                <Clock className="w-3 h-3" />
+                {alert.timestamp}
+              </span>
+              {alert.duration && (
+                <span className="flex items-center gap-1">
+                  <Clock className="w-3 h-3" />
+                  {alert.duration}
+                </span>
+              )}
+            </div>
+            <button 
+              onClick={() => onViewDetails(alert)}
+              className="flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300 transition-colors group"
+            >
+              View Details 
+              <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
+            </button>
+          </div>
+        </motion.div>
+      ))}
+      {(!alerts || alerts.length === 0) && (
+        <div className="text-center py-8">
+          <CheckCircle className="w-12 h-12 text-emerald-400 mx-auto mb-3" />
+          <p className="text-gray-400">No active alerts</p>
+          <p className="text-sm text-gray-500 mt-1">All systems are running normally</p>
+        </div>
+      )}
+    </div>
+  </div>
+);
 
 // Component: Metric Card
 const MetricCard = ({ icon: Icon, value, label, subtext, color, delay }) => (
@@ -688,7 +1168,7 @@ const WorkOrdersTab = ({ workOrders, filters, setFilters, fetchDetail, getQualit
 // Component: Filter Panel
 const FilterPanel = ({ filters, setFilters, type }) => (
   <div className="bg-gray-800/50 rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-gray-700/50">
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
       <div className="relative">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
         <input
@@ -724,6 +1204,19 @@ const FilterPanel = ({ filters, setFilters, type }) => (
           {type === 'equipment' ? 'Show only issues' : 'Show quality issues'}
         </label>
       </div>
+
+      {type === 'employee' && (
+        <select
+          value={filters.department}
+          onChange={(e) => setFilters({...filters, department: e.target.value})}
+          className="w-full bg-gray-900/50 border border-gray-700 rounded-xl px-4 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+        >
+          <option value="all">All Departments</option>
+          <option value="production">Production</option>
+          <option value="quality">Quality Control</option>
+          <option value="maintenance">Maintenance</option>
+        </select>
+      )}
     </div>
   </div>
 );
@@ -1270,5 +1763,189 @@ const StatCard = ({ label, value, color }) => (
     <div className="text-xs sm:text-sm text-gray-400 mt-1">{label}</div>
   </div>
 );
+
+// Component: Alert Detail Modal
+const AlertDetailModal = ({ alert, show, onClose, onViewEquipment, onViewWorkOrder }) => {
+  if (!show || !alert) return null;
+
+  const getSeverityColor = (severity) => {
+    switch (severity) {
+      case 'CRITICAL': return 'red';
+      case 'HIGH': return 'orange';
+      case 'MEDIUM': return 'yellow';
+      default: return 'gray';
+    }
+  };
+
+  const severityColor = getSeverityColor(alert.severity);
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 bg-black/70 backdrop-blur-xl z-50 flex items-center justify-center p-4"
+        onClick={onClose}
+      >
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.9, y: 20 }}
+          onClick={(e) => e.stopPropagation()}
+          className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl border border-gray-700/50 w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col"
+        >
+          {/* Modal Header */}
+          <div className={`p-6 border-b ${
+            severityColor === 'red' ? 'border-red-500/30 bg-red-900/10' :
+            severityColor === 'orange' ? 'border-orange-500/30 bg-orange-900/10' :
+            'border-yellow-500/30 bg-yellow-900/10'
+          }`}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className={`p-3 rounded-xl ${
+                  severityColor === 'red' ? 'bg-red-500/20' :
+                  severityColor === 'orange' ? 'bg-orange-500/20' :
+                  'bg-yellow-500/20'
+                }`}>
+                  {alert.severity === 'CRITICAL' && <XCircle className="w-6 h-6 text-red-400" />}
+                  {alert.severity === 'HIGH' && <AlertCircle className="w-6 h-6 text-orange-400" />}
+                  {alert.severity === 'MEDIUM' && <AlertCircle className="w-6 h-6 text-yellow-400" />}
+                </div>
+                <div>
+                  <h3 className="text-xl font-semibold text-white">Alert Details</h3>
+                  <p className={`text-sm font-bold ${
+                    severityColor === 'red' ? 'text-red-400' :
+                    severityColor === 'orange' ? 'text-orange-400' :
+                    'text-yellow-400'
+                  }`}>
+                    {alert.severity} Priority • {alert.alert_type}
+                  </p>
+                </div>
+              </div>
+              <button onClick={onClose} className="p-2 rounded-lg hover:bg-gray-700/50 transition-colors">
+                <X className="w-5 h-5 text-gray-400" />
+              </button>
+            </div>
+          </div>
+
+          {/* Modal Content */}
+          <div className="flex-1 overflow-y-auto p-6">
+            <div className="space-y-6">
+              {/* Alert Summary */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-gray-900/50 rounded-xl p-4">
+                  <p className="text-sm text-gray-400 mb-1">Equipment</p>
+                  <p className="text-white font-semibold">{alert.equipment_code}</p>
+                  {alert.equipment_name && (
+                    <p className="text-sm text-gray-400">{alert.equipment_name}</p>
+                  )}
+                </div>
+                <div className="bg-gray-900/50 rounded-xl p-4">
+                  <p className="text-sm text-gray-400 mb-1">First Detected</p>
+                  <p className="text-white font-semibold">{alert.timestamp}</p>
+                  {alert.duration && (
+                    <p className="text-sm text-gray-400">Duration: {alert.duration}</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Alert Message */}
+              <div>
+                <h4 className="text-lg font-semibold text-white mb-3">Alert Description</h4>
+                <div className="bg-gray-900/50 rounded-xl p-4">
+                  <p className="text-gray-300 leading-relaxed">{alert.message}</p>
+                </div>
+              </div>
+
+              {/* Additional Details */}
+              {(alert.work_order_id || alert.operator_id || alert.department) && (
+                <div>
+                  <h4 className="text-lg font-semibold text-white mb-3">Related Information</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    {alert.work_order_id && (
+                      <div className="bg-gray-900/50 rounded-xl p-4">
+                        <p className="text-sm text-gray-400 mb-1">Work Order</p>
+                        <p className="text-blue-400 font-semibold">{alert.work_order_id}</p>
+                      </div>
+                    )}
+                    {alert.operator_id && (
+                      <div className="bg-gray-900/50 rounded-xl p-4">
+                        <p className="text-sm text-gray-400 mb-1">Operator</p>
+                        <p className="text-white font-semibold">{alert.operator_id}</p>
+                      </div>
+                    )}
+                    {alert.department && (
+                      <div className="bg-gray-900/50 rounded-xl p-4">
+                        <p className="text-sm text-gray-400 mb-1">Department</p>
+                        <p className="text-white font-semibold">{alert.department}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Recommended Actions */}
+              <div>
+                <h4 className="text-lg font-semibold text-white mb-3">Recommended Actions</h4>
+                <div className="space-y-2">
+                  {alert.severity === 'CRITICAL' && (
+                    <>
+                      <div className="flex items-center gap-3 p-3 bg-red-900/20 rounded-lg">
+                        <XCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
+                        <p className="text-sm text-white">Immediate maintenance required</p>
+                      </div>
+                      <div className="flex items-center gap-3 p-3 bg-red-900/20 rounded-lg">
+                        <Users className="w-5 h-5 text-red-400 flex-shrink-0" />
+                        <p className="text-sm text-white">Notify maintenance team immediately</p>
+                      </div>
+                    </>
+                  )}
+                  {alert.severity === 'HIGH' && (
+                    <div className="flex items-center gap-3 p-3 bg-orange-900/20 rounded-lg">
+                      <Clock className="w-5 h-5 text-orange-400 flex-shrink-0" />
+                      <p className="text-sm text-white">Schedule maintenance within 4 hours</p>
+                    </div>
+                  )}
+                  {alert.severity === 'MEDIUM' && (
+                    <div className="flex items-center gap-3 p-3 bg-yellow-900/20 rounded-lg">
+                      <Calendar className="w-5 h-5 text-yellow-400 flex-shrink-0" />
+                      <p className="text-sm text-white">Schedule maintenance within 24 hours</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Modal Footer */}
+          <div className="p-6 border-t border-gray-700/50 flex justify-between items-center">
+            <div className="flex items-center gap-2 text-sm text-gray-400">
+              <Clock className="w-4 h-4" />
+              Last updated: {alert.timestamp}
+            </div>
+            <div className="flex gap-3">
+              {alert.equipment_id && (
+                <button
+                  onClick={() => onViewEquipment(alert.equipment_id)}
+                  className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-xl transition-colors text-sm"
+                >
+                  <Cpu className="w-4 h-4" />
+                  View Equipment
+                </button>
+              )}
+              <button
+                onClick={onClose}
+                className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-xl transition-colors text-sm"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
+  );
+};
 
 export default ProductionReview;

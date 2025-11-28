@@ -9,7 +9,8 @@ import {
   Play, Square, CheckSquare, Users, Target, Calendar as CalendarIcon,
   BarChart2, PieChart, Activity, FileText, Clock as ClockIcon,
   ArrowRight, ArrowLeft, Wrench, Cog, AlertOctagon, TrendingDown,
-  User, Settings, ClipboardList, TrendingUp as TrendingUpIcon
+  User, Settings, ClipboardList, TrendingUp as TrendingUpIcon,
+  Brain, Copy
 } from 'lucide-react';
 import api from '../utils/api';
 import Sidebar from '../components/Sidebar';
@@ -21,10 +22,10 @@ const ProductionEntries = () => {
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showBulkModal, setShowBulkModal] = useState(false);
+  const [showSmartBulkModal, setShowSmartBulkModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
-  
   
   // New production entry form state
   const [newProductionEntry, setNewProductionEntry] = useState({
@@ -42,6 +43,20 @@ const ProductionEntries = () => {
   // Bulk entry form state
   const [bulkEntries, setBulkEntries] = useState([{...newProductionEntry}]);
   
+  // Smart bulk entry form state
+  const [smartBulkConfig, setSmartBulkConfig] = useState({
+    work_order: '',
+    equipment: '',
+    operator: '',
+    shift: 'day',
+    start_datetime: new Date().toISOString().slice(0, 16),
+    end_datetime: new Date(Date.now() + 60 * 60 * 1000).toISOString().slice(0, 16),
+    total_quantity: '',
+    interval_minutes: 60,
+    downtime_minutes: 0,
+    downtime_reason: ''
+  });
+
   // Data for dropdowns
   const [workOrders, setWorkOrders] = useState([]);
   const [equipment, setEquipment] = useState([]);
@@ -248,8 +263,77 @@ const ProductionEntries = () => {
     }
   };
 
+  // Smart bulk entry generation
+  const generateSmartBulkEntries = () => {
+    const startTime = new Date(smartBulkConfig.start_datetime);
+    const endTime = new Date(smartBulkConfig.end_datetime);
+    const totalMinutes = (endTime - startTime) / (1000 * 60);
+    const intervalMinutes = parseInt(smartBulkConfig.interval_minutes);
+    const totalQuantity = parseInt(smartBulkConfig.total_quantity);
+    
+    if (totalMinutes <= 0) {
+      alert('End time must be after start time');
+      return;
+    }
+    
+    if (intervalMinutes <= 0) {
+      alert('Interval must be greater than 0 minutes');
+      return;
+    }
+    
+    if (totalQuantity <= 0) {
+      alert('Total quantity must be greater than 0');
+      return;
+    }
+    
+    const numberOfEntries = Math.floor(totalMinutes / intervalMinutes);
+    
+    if (numberOfEntries === 0) {
+      alert('Time range is too short for the selected interval');
+      return;
+    }
+    
+    const baseQuantity = Math.floor(totalQuantity / numberOfEntries);
+    const remainder = totalQuantity % numberOfEntries;
+    
+    // Show remainder warning if needed
+    if (remainder > 0) {
+      alert(`Total quantity ${totalQuantity} cannot be evenly distributed across ${numberOfEntries} entries.\n\n${remainder} units will need to be manually distributed across the entries.`);
+    }
+    
+    const generatedEntries = [];
+    
+    for (let i = 0; i < numberOfEntries; i++) {
+      const entryTime = new Date(startTime.getTime() + i * intervalMinutes * 60000);
+      let quantity = baseQuantity;
+      
+      // Add remainder to the first entry
+      if (i === 0) {
+        quantity += remainder;
+      }
+      
+      generatedEntries.push({
+        work_order: smartBulkConfig.work_order,
+        equipment: smartBulkConfig.equipment,
+        operator: smartBulkConfig.operator,
+        entry_datetime: entryTime.toISOString().slice(0, 16),
+        quantity_produced: quantity.toString(),
+        quantity_rejected: '0',
+        downtime_minutes: smartBulkConfig.downtime_minutes.toString(),
+        downtime_reason: smartBulkConfig.downtime_reason,
+        shift: smartBulkConfig.shift
+      });
+    }
+    
+    setBulkEntries(generatedEntries);
+    setShowSmartBulkModal(false);
+    setShowBulkModal(true);
+  };
+
   const addBulkEntryRow = () => {
-    setBulkEntries([...bulkEntries, {...newProductionEntry}]);
+    // Auto-fill with data from the first entry if available
+    const baseEntry = bulkEntries.length > 0 ? {...bulkEntries[0]} : {...newProductionEntry};
+    setBulkEntries([...bulkEntries, baseEntry]);
   };
 
   const removeBulkEntryRow = (index) => {
@@ -263,6 +347,13 @@ const ProductionEntries = () => {
   const updateBulkEntry = (index, field, value) => {
     const updatedEntries = [...bulkEntries];
     updatedEntries[index][field] = value;
+    setBulkEntries(updatedEntries);
+  };
+
+  const duplicateBulkEntry = (index) => {
+    const entryToDuplicate = {...bulkEntries[index]};
+    const updatedEntries = [...bulkEntries];
+    updatedEntries.splice(index + 1, 0, entryToDuplicate);
     setBulkEntries(updatedEntries);
   };
 
@@ -326,7 +417,7 @@ const ProductionEntries = () => {
               <p className="text-gray-400 mt-1">Real-time Production Tracking & Efficiency</p>
             </div>
             
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-3">
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
@@ -337,15 +428,34 @@ const ProductionEntries = () => {
                 <span className="text-sm">New Entry</span>
               </motion.button>
               
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setShowBulkModal(true)}
-                className="flex items-center space-x-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 px-4 py-2 rounded-xl transition-all"
-              >
-                <ClipboardList className="w-4 h-4" />
-                <span className="text-sm">Bulk Entry</span>
-              </motion.button>
+              <div className="relative group">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="flex items-center space-x-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 px-4 py-2 rounded-xl transition-all"
+                >
+                  <ClipboardList className="w-4 h-4" />
+                  <span className="text-sm">Bulk Entry</span>
+                  <ChevronDown className="w-3 h-3" />
+                </motion.button>
+                
+                <div className="absolute right-0 top-full mt-1 w-48 bg-gray-800 border border-gray-700 rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-40">
+                  <button
+                    onClick={() => setShowBulkModal(true)}
+                    className="w-full text-left px-4 py-3 hover:bg-gray-700/50 rounded-t-xl flex items-center space-x-2"
+                  >
+                    <ClipboardList className="w-4 h-4 text-blue-400" />
+                    <span>Manual Bulk Entry</span>
+                  </button>
+                  <button
+                    onClick={() => setShowSmartBulkModal(true)}
+                    className="w-full text-left px-4 py-3 hover:bg-gray-700/50 rounded-b-xl flex items-center space-x-2"
+                  >
+                    <Brain className="w-4 h-4 text-purple-400" />
+                    <span>Smart Bulk Entry</span>
+                  </button>
+                </div>
+              </div>
               
               <motion.button
                 whileHover={{ scale: 1.05 }}
@@ -419,103 +529,104 @@ const ProductionEntries = () => {
             </div>
           </div>
 
-        {/* Equipment Efficiency */}
-        {efficiencyData.length > 0 && (
-          <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 rounded-2xl border border-gray-700/50 backdrop-blur-xl p-6 mb-6">
-            <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
-              <Activity className="w-5 h-5 mr-2 text-purple-400" />
-              Equipment Efficiency (OEE)
-            </h3>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {efficiencyData.slice(0, 3).map((equipment, index) => {
-                // Cap values at 100% for visualization
-                const availability = Math.min(equipment.availability, 100);
-                const performance = Math.min(equipment.performance, 100);
-                const quality = Math.min(equipment.quality, 100);
-                
-                return (
-                  <motion.div 
-                    key={index}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                    className="bg-gray-800/30 rounded-xl p-4 border border-gray-700/50"
-                  >
-                    <div className="flex items-center justify-between mb-3">
-                      <h4 className="font-medium text-white">{equipment.equipment_name}</h4>
-                      <span className={`text-xs px-2 py-1 rounded-full ${getEfficiencyColor(equipment.oee)} bg-gray-800`}>
-                        OEE: {equipment.oee}%
-                      </span>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      {/* Availability */}
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-300">Availability</span>
-                        <span className="text-white">
-                          {equipment.availability}%
+          {/* Equipment Efficiency */}
+          {efficiencyData.length > 0 && (
+            <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 rounded-2xl border border-gray-700/50 backdrop-blur-xl p-6 mb-6">
+              <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
+                <Activity className="w-5 h-5 mr-2 text-purple-400" />
+                Equipment Efficiency (OEE)
+              </h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {efficiencyData.slice(0, 3).map((equipment, index) => {
+                  // Cap values at 100% for visualization
+                  const availability = Math.min(equipment.availability, 100);
+                  const performance = Math.min(equipment.performance, 100);
+                  const quality = Math.min(equipment.quality, 100);
+                  
+                  return (
+                    <motion.div 
+                      key={index}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                      className="bg-gray-800/30 rounded-xl p-4 border border-gray-700/50"
+                    >
+                      <div className="flex items-center justify-between mb-3">
+                        <h4 className="font-medium text-white">{equipment.equipment_name}</h4>
+                        <span className={`text-xs px-2 py-1 rounded-full ${getEfficiencyColor(equipment.oee)} bg-gray-800`}>
+                          OEE: {equipment.oee}%
+                        </span>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        {/* Availability */}
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-300">Availability</span>
+                          <span className="text-white">
+                            {equipment.availability}%
+                            {equipment.availability > 100 && (
+                              <span className="text-amber-400 ml-1" title="Exceeds 100%">⚠</span>
+                            )}
+                          </span>
+                        </div>
+                        <div className="w-full bg-gray-700 rounded-full h-1.5 relative overflow-hidden">
+                          <div 
+                            className="bg-blue-500 h-1.5 rounded-full transition-all duration-300" 
+                            style={{ width: `${availability}%` }}
+                          />
                           {equipment.availability > 100 && (
-                            <span className="text-amber-400 ml-1" title="Exceeds 100%">⚠</span>
+                            <div className="absolute inset-0 border border-amber-400 rounded-full" />
                           )}
-                        </span>
-                      </div>
-                      <div className="w-full bg-gray-700 rounded-full h-1.5 relative overflow-hidden">
-                        <div 
-                          className="bg-blue-500 h-1.5 rounded-full transition-all duration-300" 
-                          style={{ width: `${availability}%` }}
-                        />
-                        {equipment.availability > 100 && (
-                          <div className="absolute inset-0 border border-amber-400 rounded-full" />
-                        )}
-                      </div>
-                      
-                      {/* Performance */}
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-300">Performance</span>
-                        <span className="text-white">
-                          {equipment.performance}%
+                        </div>
+                        
+                        {/* Performance */}
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-300">Performance</span>
+                          <span className="text-white">
+                            {equipment.performance}%
+                            {equipment.performance > 100 && (
+                              <span className="text-amber-400 ml-1" title="Exceeds 100%">⚠</span>
+                            )}
+                          </span>
+                        </div>
+                        <div className="w-full bg-gray-700 rounded-full h-1.5 relative overflow-hidden">
+                          <div 
+                            className="bg-purple-500 h-1.5 rounded-full transition-all duration-300" 
+                            style={{ width: `${performance}%` }}
+                          />
                           {equipment.performance > 100 && (
-                            <span className="text-amber-400 ml-1" title="Exceeds 100%">⚠</span>
+                            <div className="absolute inset-0 border border-amber-400 rounded-full" />
                           )}
-                        </span>
-                      </div>
-                      <div className="w-full bg-gray-700 rounded-full h-1.5 relative overflow-hidden">
-                        <div 
-                          className="bg-purple-500 h-1.5 rounded-full transition-all duration-300" 
-                          style={{ width: `${performance}%` }}
-                        />
-                        {equipment.performance > 100 && (
-                          <div className="absolute inset-0 border border-amber-400 rounded-full" />
-                        )}
-                      </div>
-                      
-                      {/* Quality */}
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-300">Quality</span>
-                        <span className="text-white">
-                          {equipment.quality}%
+                        </div>
+                        
+                        {/* Quality */}
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-300">Quality</span>
+                          <span className="text-white">
+                            {equipment.quality}%
+                            {equipment.quality > 100 && (
+                              <span className="text-amber-400 ml-1" title="Exceeds 100%">⚠</span>
+                            )}
+                          </span>
+                        </div>
+                        <div className="w-full bg-gray-700 rounded-full h-1.5 relative overflow-hidden">
+                          <div 
+                            className="bg-emerald-500 h-1.5 rounded-full transition-all duration-300" 
+                            style={{ width: `${quality}%` }}
+                          />
                           {equipment.quality > 100 && (
-                            <span className="text-amber-400 ml-1" title="Exceeds 100%">⚠</span>
+                            <div className="absolute inset-0 border border-amber-400 rounded-full" />
                           )}
-                        </span>
+                        </div>
                       </div>
-                      <div className="w-full bg-gray-700 rounded-full h-1.5 relative overflow-hidden">
-                        <div 
-                          className="bg-emerald-500 h-1.5 rounded-full transition-all duration-300" 
-                          style={{ width: `${quality}%` }}
-                        />
-                        {equipment.quality > 100 && (
-                          <div className="absolute inset-0 border border-amber-400 rounded-full" />
-                        )}
-                      </div>
-                    </div>
-                  </motion.div>
-                );
-              })}
+                    </motion.div>
+                  );
+                })}
+              </div>
             </div>
-          </div>
-        )}
+          )}
+
           {/* Filters and Controls */}
           <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 rounded-2xl border border-gray-700/50 backdrop-blur-xl p-6 mb-6">
             <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
@@ -601,82 +712,82 @@ const ProductionEntries = () => {
             </div>
           </div>
 
-        
-            <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 rounded-2xl border border-gray-700/50 backdrop-blur-xl overflow-hidden mb-6">
-              <div className="p-6 border-b border-gray-700/50 flex justify-between items-center">
-                <h3 className="text-lg font-semibold text-white flex items-center">
-                  <ClipboardList className="w-5 h-5 mr-2 text-blue-400" />
-                  Production Entries
-                  <span className="ml-2 text-sm text-gray-400">({filteredEntries.length} entries)</span>
-                </h3>
-                
-                <div className="flex items-center space-x-2">
-                  <button className="p-2 rounded-lg bg-gray-800/50 hover:bg-gray-700/50 transition-colors">
-                    <Grid className="w-4 h-4 text-gray-400" />
-                  </button>
-                  <button className="p-2 rounded-lg bg-gray-800/50 hover:bg-gray-700/50 transition-colors">
-                    <List className="w-4 h-4 text-gray-400" />
-                  </button>
-                </div>
-              </div>
+          {/* Production Entries Table */}
+          <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 rounded-2xl border border-gray-700/50 backdrop-blur-xl overflow-hidden mb-6">
+            <div className="p-6 border-b border-gray-700/50 flex justify-between items-center">
+              <h3 className="text-lg font-semibold text-white flex items-center">
+                <ClipboardList className="w-5 h-5 mr-2 text-blue-400" />
+                Production Entries
+                <span className="ml-2 text-sm text-gray-400">({filteredEntries.length} entries)</span>
+              </h3>
               
-              {filteredEntries.length === 0 ? (
-                <div className="p-12 text-center">
-                  <ClipboardList className="w-16 h-16 mx-auto mb-4 text-gray-500" />
-                  <h3 className="text-xl font-semibold text-gray-400 mb-2">No production entries found</h3>
-                  <p className="text-gray-500">Create a new production entry or try adjusting your filters</p>
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b border-gray-700/50">
-                        <th className="text-left py-3 px-4 text-sm text-gray-400 font-medium">Date & Time</th>
-                        <th className="text-left py-3 px-4 text-sm text-gray-400 font-medium">Work Order</th>
-                        <th className="text-left py-3 px-4 text-sm text-gray-400 font-medium">Equipment</th>
-                        <th className="text-left py-3 px-4 text-sm text-gray-400 font-medium">Operator</th>
-                        <th className="text-left py-3 px-4 text-sm text-gray-400 font-medium">Output</th>
-                        <th className="text-left py-3 px-4 text-sm text-gray-400 font-medium">Efficiency</th>
-                        <th className="text-left py-3 px-4 text-sm text-gray-400 font-medium">Quality</th>
-                        <th className="text-left py-3 px-4 text-sm text-gray-400 font-medium">Shift</th>
-                        <th className="text-right py-3 px-4 text-sm text-gray-400 font-medium">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredEntries.map((entry, index) => {
-                        const totalOutput = entry.quantity_produced + (entry.quantity_rejected || 0);
-                        const qualityRate = totalOutput > 0 
-                          ? (entry.quantity_produced / totalOutput) * 100 
-                          : 0;
-                        const efficiency = entry.efficiency_percentage || 0;
-                        
-                        return (
-                          <motion.tr 
-                            key={entry.id}
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ delay: index * 0.05 }}
-                            className="border-b border-gray-700/30 last:border-0 hover:bg-gray-800/30 group"
-                          >
-                            <td className="py-3 px-4">
-                              <div className="text-white font-medium">{formatDateTime(entry.entry_datetime)}</div>
-                            </td>
-                              {/* Work Order Cell */}
-                              <td className="py-3 px-4">
-                                <div className="flex items-center">
-                                  <div className="p-2 rounded-lg bg-blue-500/10 mr-3">
-                                    <FileText className="w-4 h-4 text-blue-400" />
-                                  </div>
-                                  <div>
-                                    <div className="font-medium text-white group-hover:text-blue-300 transition-colors">
-                                      {entry.work_order_number || 'N/A'}
-                                    </div>
-                                    <div className="text-xs text-gray-400">
-                                      {entry.work_order?.product_name || 'N/A'}
-                                    </div>
-                                  </div>
+              <div className="flex items-center space-x-2">
+                <button className="p-2 rounded-lg bg-gray-800/50 hover:bg-gray-700/50 transition-colors">
+                  <Grid className="w-4 h-4 text-gray-400" />
+                </button>
+                <button className="p-2 rounded-lg bg-gray-800/50 hover:bg-gray-700/50 transition-colors">
+                  <List className="w-4 h-4 text-gray-400" />
+                </button>
+              </div>
+            </div>
+            
+            {filteredEntries.length === 0 ? (
+              <div className="p-12 text-center">
+                <ClipboardList className="w-16 h-16 mx-auto mb-4 text-gray-500" />
+                <h3 className="text-xl font-semibold text-gray-400 mb-2">No production entries found</h3>
+                <p className="text-gray-500">Create a new production entry or try adjusting your filters</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-gray-700/50">
+                      <th className="text-left py-3 px-4 text-sm text-gray-400 font-medium">Date & Time</th>
+                      <th className="text-left py-3 px-4 text-sm text-gray-400 font-medium">Work Order</th>
+                      <th className="text-left py-3 px-4 text-sm text-gray-400 font-medium">Equipment</th>
+                      <th className="text-left py-3 px-4 text-sm text-gray-400 font-medium">Operator</th>
+                      <th className="text-left py-3 px-4 text-sm text-gray-400 font-medium">Output</th>
+                      <th className="text-left py-3 px-4 text-sm text-gray-400 font-medium">Efficiency</th>
+                      <th className="text-left py-3 px-4 text-sm text-gray-400 font-medium">Quality</th>
+                      <th className="text-left py-3 px-4 text-sm text-gray-400 font-medium">Shift</th>
+                      <th className="text-right py-3 px-4 text-sm text-gray-400 font-medium">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredEntries.map((entry, index) => {
+                      const totalOutput = entry.quantity_produced + (entry.quantity_rejected || 0);
+                      const qualityRate = totalOutput > 0 
+                        ? (entry.quantity_produced / totalOutput) * 100 
+                        : 0;
+                      const efficiency = entry.efficiency_percentage || 0;
+                      
+                      return (
+                        <motion.tr 
+                          key={entry.id}
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          transition={{ delay: index * 0.05 }}
+                          className="border-b border-gray-700/30 last:border-0 hover:bg-gray-800/30 group"
+                        >
+                          <td className="py-3 px-4">
+                            <div className="text-white font-medium">{formatDateTime(entry.entry_datetime)}</div>
+                          </td>
+                          {/* Work Order Cell */}
+                          <td className="py-3 px-4">
+                            <div className="flex items-center">
+                              <div className="p-2 rounded-lg bg-blue-500/10 mr-3">
+                                <FileText className="w-4 h-4 text-blue-400" />
+                              </div>
+                              <div>
+                                <div className="font-medium text-white group-hover:text-blue-300 transition-colors">
+                                  {entry.work_order_number || 'N/A'}
                                 </div>
-                              </td>
+                                <div className="text-xs text-gray-400">
+                                  {entry.work_order?.product_name || 'N/A'}
+                                </div>
+                              </div>
+                            </div>
+                          </td>
 
                           {/* Equipment Cell */}
                           <td className="py-3 px-4">
@@ -724,46 +835,46 @@ const ProductionEntries = () => {
                               </div>
                             </div>
                           </td>
-                            <td className="py-3 px-4">
-                              <div className="flex items-center">
-                                <div className={`text-xs font-medium px-2 py-1 rounded-full ${getEfficiencyColor(efficiency)} bg-gray-800/50`}>
-                                  {efficiency.toFixed(1)}%
-                                </div>
+                          <td className="py-3 px-4">
+                            <div className="flex items-center">
+                              <div className={`text-xs font-medium px-2 py-1 rounded-full ${getEfficiencyColor(efficiency)} bg-gray-800/50`}>
+                                {efficiency.toFixed(1)}%
                               </div>
-                            </td>
-                            <td className="py-3 px-4">
-                              <div className="flex items-center">
-                                <div className={`text-xs font-medium px-2 py-1 rounded-full ${getEfficiencyColor(qualityRate)} bg-gray-800/50`}>
-                                  {qualityRate.toFixed(1)}%
-                                </div>
+                            </div>
+                          </td>
+                          <td className="py-3 px-4">
+                            <div className="flex items-center">
+                              <div className={`text-xs font-medium px-2 py-1 rounded-full ${getEfficiencyColor(qualityRate)} bg-gray-800/50`}>
+                                {qualityRate.toFixed(1)}%
                               </div>
-                            </td>
-                            <td className="py-3 px-4">
-                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getShiftColor(entry.shift)}`}>
-                                {entry.shift?.toUpperCase() || 'N/A'}
-                              </span>
-                            </td>
-                            <td className="py-3 px-4 text-right">
-                              <div className="flex items-center justify-end space-x-2">
-                                <motion.button
-                                  whileHover={{ scale: 1.1 }}
-                                  whileTap={{ scale: 0.9 }}
-                                  onClick={() => handleViewDetails(entry)}
-                                  className="p-1.5 bg-gray-800/50 hover:bg-blue-500/20 rounded-lg transition-colors group"
-                                  title="View Details"
-                                >
-                                  <Eye className="w-4 h-4 text-gray-400 group-hover:text-blue-400 transition-colors" />
-                                </motion.button>
-                              </div>
-                            </td>
-                          </motion.tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
+                            </div>
+                          </td>
+                          <td className="py-3 px-4">
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getShiftColor(entry.shift)}`}>
+                              {entry.shift?.toUpperCase() || 'N/A'}
+                            </span>
+                          </td>
+                          <td className="py-3 px-4 text-right">
+                            <div className="flex items-center justify-end space-x-2">
+                              <motion.button
+                                whileHover={{ scale: 1.1 }}
+                                whileTap={{ scale: 0.9 }}
+                                onClick={() => handleViewDetails(entry)}
+                                className="p-1.5 bg-gray-800/50 hover:bg-blue-500/20 rounded-lg transition-colors group"
+                                title="View Details"
+                              >
+                                <Eye className="w-4 h-4 text-gray-400 group-hover:text-blue-400 transition-colors" />
+                              </motion.button>
+                            </div>
+                          </td>
+                        </motion.tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
 
           {/* Performance Metrics */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -1026,10 +1137,10 @@ const ProductionEntries = () => {
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl border border-gray-700/50 w-full max-w-4xl overflow-hidden"
+              className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl border border-gray-700/50 w-full max-w-6xl overflow-hidden"
             >
               <div className="p-6 border-b border-gray-700/50 flex justify-between items-center">
-                <h3 className="text-xl font-semibold text-white">Bulk Production Entry</h3>
+                <h3 className="text-xl font-semibold text-white">Bulk Production Entry ({bulkEntries.length} entries)</h3>
                 <button
                   onClick={() => setShowBulkModal(false)}
                   className="p-2 rounded-lg hover:bg-gray-700/50 transition-colors"
@@ -1041,21 +1152,36 @@ const ProductionEntries = () => {
               <form onSubmit={handleBulkCreateEntries} className="p-6 space-y-4">
                 <div className="overflow-y-auto max-h-96">
                   {bulkEntries.map((entry, index) => (
-                    <div key={index} className="bg-gray-800/30 rounded-xl p-4 mb-4">
+                    <div key={index} className="bg-gray-800/30 rounded-xl p-4 mb-4 border border-gray-700/50">
                       <div className="flex justify-between items-center mb-4">
-                        <h4 className="font-medium text-white">Entry {index + 1}</h4>
-                        {index > 0 && (
+                        <h4 className="font-medium text-white flex items-center">
+                          <span className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-xs mr-2">
+                            {index + 1}
+                          </span>
+                          Entry {index + 1}
+                        </h4>
+                        <div className="flex space-x-2">
                           <button
                             type="button"
-                            onClick={() => removeBulkEntryRow(index)}
-                            className="p-1.5 bg-red-500/10 hover:bg-red-500/20 rounded-lg transition-colors"
+                            onClick={() => duplicateBulkEntry(index)}
+                            className="p-1.5 bg-blue-500/10 hover:bg-blue-500/20 rounded-lg transition-colors"
+                            title="Duplicate Entry"
                           >
-                            <Trash2 className="w-4 h-4 text-red-400" />
+                            <Copy className="w-4 h-4 text-blue-400" />
                           </button>
-                        )}
+                          {index > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => removeBulkEntryRow(index)}
+                              className="p-1.5 bg-red-500/10 hover:bg-red-500/20 rounded-lg transition-colors"
+                            >
+                              <Trash2 className="w-4 h-4 text-red-400" />
+                            </button>
+                          )}
+                        </div>
                       </div>
                       
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                         {/* Work Order Selection */}
                         <div>
                           <label className="block text-sm font-medium text-gray-300 mb-1">Work Order</label>
@@ -1063,9 +1189,9 @@ const ProductionEntries = () => {
                             required
                             value={entry.work_order}
                             onChange={(e) => updateBulkEntry(index, 'work_order', e.target.value)}
-                            className="w-full bg-gray-800/50 border border-gray-700 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            className="w-full bg-gray-800/50 border border-gray-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
                           >
-                            <option value="">Select a Work Order</option>
+                            <option value="">Select Work Order</option>
                             {workOrders.map(wo => (
                               <option key={wo.id} value={wo.id}>
                                 {wo.wo_number} - {wo.product_name}
@@ -1081,7 +1207,7 @@ const ProductionEntries = () => {
                             required
                             value={entry.equipment}
                             onChange={(e) => updateBulkEntry(index, 'equipment', e.target.value)}
-                            className="w-full bg-gray-800/50 border border-gray-700 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            className="w-full bg-gray-800/50 border border-gray-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
                           >
                             <option value="">Select Equipment</option>
                             {equipment.map(eq => (
@@ -1099,7 +1225,7 @@ const ProductionEntries = () => {
                             required
                             value={entry.operator}
                             onChange={(e) => updateBulkEntry(index, 'operator', e.target.value)}
-                            className="w-full bg-gray-800/50 border border-gray-700 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            className="w-full bg-gray-800/50 border border-gray-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
                           >
                             <option value="">Select Operator</option>
                             {employees.map(emp => (
@@ -1117,7 +1243,7 @@ const ProductionEntries = () => {
                             required
                             value={entry.shift}
                             onChange={(e) => updateBulkEntry(index, 'shift', e.target.value)}
-                            className="w-full bg-gray-800/50 border border-gray-700 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            className="w-full bg-gray-800/50 border border-gray-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
                           >
                             <option value="day">Day Shift</option>
                             <option value="night">Night Shift</option>
@@ -1133,7 +1259,7 @@ const ProductionEntries = () => {
                             required
                             value={entry.entry_datetime}
                             onChange={(e) => updateBulkEntry(index, 'entry_datetime', e.target.value)}
-                            className="w-full bg-gray-800/50 border border-gray-700 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            className="w-full bg-gray-800/50 border border-gray-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
                           />
                         </div>
                         
@@ -1146,7 +1272,7 @@ const ProductionEntries = () => {
                             min="0"
                             value={entry.quantity_produced}
                             onChange={(e) => updateBulkEntry(index, 'quantity_produced', e.target.value)}
-                            className="w-full bg-gray-800/50 border border-gray-700 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            className="w-full bg-gray-800/50 border border-gray-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
                           />
                         </div>
                         
@@ -1158,46 +1284,56 @@ const ProductionEntries = () => {
                             min="0"
                             value={entry.quantity_rejected}
                             onChange={(e) => updateBulkEntry(index, 'quantity_rejected', e.target.value)}
-                            className="w-full bg-gray-800/50 border border-gray-700 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            className="w-full bg-gray-800/50 border border-gray-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
                           />
                         </div>
                         
                         {/* Downtime Minutes */}
                         <div>
-                          <label className="block text-sm font-medium text-gray-300 mb-1">Downtime (minutes)</label>
+                          <label className="block text-sm font-medium text-gray-300 mb-1">Downtime (min)</label>
                           <input
                             type="number"
                             min="0"
                             value={entry.downtime_minutes}
                             onChange={(e) => updateBulkEntry(index, 'downtime_minutes', e.target.value)}
-                            className="w-full bg-gray-800/50 border border-gray-700 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            className="w-full bg-gray-800/50 border border-gray-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
                           />
                         </div>
-                        
-                        {/* Downtime Reason */}
-                        <div className="md:col-span-2">
-                          <label className="block text-sm font-medium text-gray-300 mb-1">Downtime Reason (if any)</label>
-                          <input
-                            type="text"
-                            value={entry.downtime_reason}
-                            onChange={(e) => updateBulkEntry(index, 'downtime_reason', e.target.value)}
-                            className="w-full bg-gray-800/50 border border-gray-700 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
-                          />
-                        </div>
+                      </div>
+                      
+                      {/* Downtime Reason */}
+                      <div className="mt-4">
+                        <label className="block text-sm font-medium text-gray-300 mb-1">Downtime Reason (if any)</label>
+                        <input
+                          type="text"
+                          value={entry.downtime_reason}
+                          onChange={(e) => updateBulkEntry(index, 'downtime_reason', e.target.value)}
+                          className="w-full bg-gray-800/50 border border-gray-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        />
                       </div>
                     </div>
                   ))}
                 </div>
                 
-                <div className="flex justify-between">
-                  <button
-                    type="button"
-                    onClick={addBulkEntryRow}
-                    className="flex items-center space-x-2 px-4 py-2 text-sm bg-gray-700 hover:bg-gray-600 rounded-xl transition-colors"
-                  >
-                    <Plus className="w-4 h-4" />
-                    <span>Add Another Entry</span>
-                  </button>
+                <div className="flex justify-between pt-4 border-t border-gray-700/50">
+                  <div className="flex space-x-3">
+                    <button
+                      type="button"
+                      onClick={addBulkEntryRow}
+                      className="flex items-center space-x-2 px-4 py-2 text-sm bg-gray-700 hover:bg-gray-600 rounded-xl transition-colors"
+                    >
+                      <Plus className="w-4 h-4" />
+                      <span>Add Entry</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowSmartBulkModal(true)}
+                      className="flex items-center space-x-2 px-4 py-2 text-sm bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 rounded-xl transition-all"
+                    >
+                      <Brain className="w-4 h-4" />
+                      <span>Smart Generate</span>
+                    </button>
+                  </div>
                   
                   <div className="flex space-x-4">
                     <button
@@ -1211,7 +1347,7 @@ const ProductionEntries = () => {
                       type="submit"
                       className="px-4 py-2 text-sm bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 rounded-xl transition-all"
                     >
-                      Create All Entries
+                      Create All Entries ({bulkEntries.length})
                     </button>
                   </div>
                 </div>
@@ -1221,163 +1357,384 @@ const ProductionEntries = () => {
         )}
       </AnimatePresence>
 
-{/* Production Entry Detail Modal */}
-<AnimatePresence>
-  {showDetailModal && selectedEntry && (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/70 backdrop-blur-xl z-50 flex items-center justify-center p-4"
-    >
-      <motion.div
-        initial={{ opacity: 0, scale: 0.9, y: 20 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.9, y: 20 }}
-        className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl border border-gray-700/50 w-full max-w-4xl overflow-hidden"
-      >
-        <div className="p-6 border-b border-gray-700/50 flex justify-between items-center">
-          <h3 className="text-xl font-semibold text-white flex items-center">
-            <ClipboardList className="w-5 h-5 mr-2 text-blue-400" />
-            Production Entry Details
-          </h3>
-          <button
-            onClick={() => setShowDetailModal(false)}
-            className="p-2 rounded-lg hover:bg-gray-700/50 transition-colors"
+      {/* Smart Bulk Entry Modal */}
+      <AnimatePresence>
+        {showSmartBulkModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/70 backdrop-blur-xl z-50 flex items-center justify-center p-4"
           >
-            <XCircle className="w-5 h-5 text-gray-400" />
-          </button>
-        </div>
-        
-        <div className="p-6 space-y-6">
-          {/* Header with key metrics */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="bg-gray-800/30 rounded-xl p-4 border border-gray-700/50">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-400">Produced</p>
-                  <p className="text-2xl font-bold text-emerald-400">{selectedEntry.quantity_produced}</p>
-                </div>
-                <div className="p-2 rounded-lg bg-emerald-500/10">
-                  <Package className="w-5 h-5 text-emerald-400" />
-                </div>
-              </div>
-            </div>
-            
-            <div className="bg-gray-800/30 rounded-xl p-4 border border-gray-700/50">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-400">Rejected</p>
-                  <p className="text-2xl font-bold text-red-400">{selectedEntry.quantity_rejected || 0}</p>
-                </div>
-                <div className="p-2 rounded-lg bg-red-500/10">
-                  <AlertCircle className="w-5 h-5 text-red-400" />
-                </div>
-              </div>
-            </div>
-            
-            <div className="bg-gray-800/30 rounded-xl p-4 border border-gray-700/50">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-400">Quality Rate</p>
-                  <p className="text-2xl font-bold text-amber-400">
-                    {selectedEntry.quantity_produced + (selectedEntry.quantity_rejected || 0) > 0 
-                      ? ((selectedEntry.quantity_produced / (selectedEntry.quantity_produced + (selectedEntry.quantity_rejected || 0))) * 100).toFixed(1) + '%'
-                      : 'N/A'
-                    }
-                  </p>
-                </div>
-                <div className="p-2 rounded-lg bg-amber-500/10">
-                  <TrendingUp className="w-5 h-5 text-amber-400" />
-                </div>
-              </div>
-            </div>
-            
-            <div className="bg-gray-800/30 rounded-xl p-4 border border-gray-700/50">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-400">Downtime</p>
-                  <p className="text-2xl font-bold text-blue-400">{selectedEntry.downtime_minutes || 0} min</p>
-                </div>
-                <div className="p-2 rounded-lg bg-blue-500/10">
-                  <Clock className="w-5 h-5 text-blue-400" />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-4">
-              <h4 className="text-lg font-medium text-white border-b border-gray-700/50 pb-2 flex items-center">
-                <CalendarIcon className="w-4 h-4 mr-2 text-blue-400" />
-                Entry Information
-              </h4>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-gray-400">Date & Time</p>
-                  <p className="text-white">{formatDateTime(selectedEntry.entry_datetime)}</p>
-                </div>
-                
-                <div>
-                  <p className="text-sm text-gray-400">Shift</p>
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getShiftColor(selectedEntry.shift)}`}>
-                    {selectedEntry.shift?.toUpperCase() || 'N/A'}
-                  </span>
-                </div>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl border border-gray-700/50 w-full max-w-2xl overflow-hidden"
+            >
+              <div className="p-6 border-b border-gray-700/50 flex justify-between items-center">
+                <h3 className="text-xl font-semibold text-white flex items-center">
+                  <Brain className="w-5 h-5 mr-2 text-purple-400" />
+                  Smart Bulk Entry Generator
+                </h3>
+                <button
+                  onClick={() => setShowSmartBulkModal(false)}
+                  className="p-2 rounded-lg hover:bg-gray-700/50 transition-colors"
+                >
+                  <XCircle className="w-5 h-5 text-gray-400" />
+                </button>
               </div>
               
-              {selectedEntry.downtime_reason && (
-                <div>
-                  <p className="text-sm text-gray-400">Downtime Reason</p>
-                  <div className="bg-gray-800/50 rounded-xl p-3 mt-1 border border-gray-700/50">
-                    <p className="text-white">{selectedEntry.downtime_reason}</p>
+              <div className="p-6 space-y-6">
+                <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4">
+                  <div className="flex items-start space-x-3">
+                    <Info className="w-5 h-5 text-blue-400 mt-0.5" />
+                    <div>
+                      <h4 className="font-medium text-blue-400 mb-1">How it works</h4>
+                      <p className="text-sm text-blue-300">
+                        Enter your total production quantity and time range. The system will automatically distribute 
+                        the production across time intervals and generate individual entries for you to review and edit.
+                      </p>
+                    </div>
                   </div>
                 </div>
-              )}
-            </div>
-            
-            <div className="space-y-4">
-              <h4 className="text-lg font-medium text-white border-b border-gray-700/50 pb-2 flex items-center">
-                <Info className="w-4 h-4 mr-2 text-purple-400" />
-                Related Information
-              </h4>
-              
-              <div className="grid grid-cols-1 gap-4">
-              <div className="bg-gray-800/30 rounded-xl p-4 border border-gray-700/50">
-                <p className="text-sm text-gray-400 mb-1">Work Order</p>
-                <p className="text-white font-medium">{selectedEntry.work_order_number || 'N/A'}</p>
-                <p className="text-gray-400 text-sm">{selectedEntry.work_order?.product_name || 'N/A'}</p>
-              </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Work Order Selection */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">Work Order</label>
+                    <select
+                      required
+                      value={smartBulkConfig.work_order}
+                      onChange={(e) => setSmartBulkConfig({...smartBulkConfig, work_order: e.target.value})}
+                      className="w-full bg-gray-800/50 border border-gray-700 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    >
+                      <option value="">Select a Work Order</option>
+                      {workOrders.map(wo => (
+                        <option key={wo.id} value={wo.id}>
+                          {wo.wo_number} - {wo.product_name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  
+                  {/* Equipment Selection */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">Equipment</label>
+                    <select
+                      required
+                      value={smartBulkConfig.equipment}
+                      onChange={(e) => setSmartBulkConfig({...smartBulkConfig, equipment: e.target.value})}
+                      className="w-full bg-gray-800/50 border border-gray-700 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    >
+                      <option value="">Select Equipment</option>
+                      {equipment.map(eq => (
+                        <option key={eq.id} value={eq.id}>
+                          {eq.equipment_code} - {eq.equipment_name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  
+                  {/* Operator Selection */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">Operator</label>
+                    <select
+                      required
+                      value={smartBulkConfig.operator}
+                      onChange={(e) => setSmartBulkConfig({...smartBulkConfig, operator: e.target.value})}
+                      className="w-full bg-gray-800/50 border border-gray-700 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    >
+                      <option value="">Select Operator</option>
+                      {employees.map(emp => (
+                        <option key={emp.id} value={emp.id}>
+                          {emp.employee_code} - {emp.full_name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  
+                  {/* Shift Selection */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">Shift</label>
+                    <select
+                      required
+                      value={smartBulkConfig.shift}
+                      onChange={(e) => setSmartBulkConfig({...smartBulkConfig, shift: e.target.value})}
+                      className="w-full bg-gray-800/50 border border-gray-700 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    >
+                      <option value="day">Day Shift</option>
+                      <option value="night">Night Shift</option>
+                      <option value="swing">Swing Shift</option>
+                    </select>
+                  </div>
+                  
+                  {/* Start Date and Time */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">Start Date & Time</label>
+                    <input
+                      type="datetime-local"
+                      required
+                      value={smartBulkConfig.start_datetime}
+                      onChange={(e) => setSmartBulkConfig({...smartBulkConfig, start_datetime: e.target.value})}
+                      className="w-full bg-gray-800/50 border border-gray-700 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    />
+                  </div>
+                  
+                  {/* End Date and Time */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">End Date & Time</label>
+                    <input
+                      type="datetime-local"
+                      required
+                      value={smartBulkConfig.end_datetime}
+                      onChange={(e) => setSmartBulkConfig({...smartBulkConfig, end_datetime: e.target.value})}
+                      className="w-full bg-gray-800/50 border border-gray-700 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    />
+                  </div>
+                  
+                  {/* Total Quantity */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">Total Quantity to Produce</label>
+                    <input
+                      type="number"
+                      required
+                      min="1"
+                      value={smartBulkConfig.total_quantity}
+                      onChange={(e) => setSmartBulkConfig({...smartBulkConfig, total_quantity: e.target.value})}
+                      className="w-full bg-gray-800/50 border border-gray-700 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    />
+                  </div>
+                  
+                  {/* Interval Minutes */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">Interval (minutes)</label>
+                    <select
+                      value={smartBulkConfig.interval_minutes}
+                      onChange={(e) => setSmartBulkConfig({...smartBulkConfig, interval_minutes: e.target.value})}
+                      className="w-full bg-gray-800/50 border border-gray-700 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    >
+                      <option value="15">15 minutes</option>
+                      <option value="30">30 minutes</option>
+                      <option value="60">1 hour</option>
+                      <option value="120">2 hours</option>
+                      <option value="240">4 hours</option>
+                    </select>
+                  </div>
+                </div>
                 
-              <div className="bg-gray-800/30 rounded-xl p-4 border border-gray-700/50">
-                <p className="text-sm text-gray-400 mb-1">Equipment</p>
-                <p className="text-white font-medium">{selectedEntry.equipment_name || 'N/A'}</p>
-                <p className="text-gray-400 text-sm">{selectedEntry.equipment?.equipment_code || 'N/A'}</p>
+                {/* Preview Information */}
+                {smartBulkConfig.start_datetime && smartBulkConfig.end_datetime && smartBulkConfig.interval_minutes && (
+                  <div className="bg-gray-800/30 rounded-xl p-4 border border-gray-700/50">
+                    <h4 className="font-medium text-white mb-2">Preview</h4>
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <span className="text-gray-400">Time Range:</span>
+                        <span className="text-white ml-2">
+                          {new Date(smartBulkConfig.start_datetime).toLocaleString()} - {new Date(smartBulkConfig.end_datetime).toLocaleString()}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-gray-400">Duration:</span>
+                        <span className="text-white ml-2">
+                          {Math.round((new Date(smartBulkConfig.end_datetime) - new Date(smartBulkConfig.start_datetime)) / (1000 * 60))} minutes
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-gray-400">Entries to generate:</span>
+                        <span className="text-white ml-2">
+                          {Math.floor((new Date(smartBulkConfig.end_datetime) - new Date(smartBulkConfig.start_datetime)) / (1000 * 60 * parseInt(smartBulkConfig.interval_minutes)))}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-gray-400">Quantity per entry:</span>
+                        <span className="text-white ml-2">
+                          ~{Math.floor(parseInt(smartBulkConfig.total_quantity || 0) / Math.floor((new Date(smartBulkConfig.end_datetime) - new Date(smartBulkConfig.start_datetime)) / (1000 * 60 * parseInt(smartBulkConfig.interval_minutes))))}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex justify-end space-x-4 pt-4 border-t border-gray-700/50">
+                  <button
+                    type="button"
+                    onClick={() => setShowSmartBulkModal(false)}
+                    className="px-4 py-2 text-sm bg-gray-700 hover:bg-gray-600 rounded-xl transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={generateSmartBulkEntries}
+                    className="px-4 py-2 text-sm bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 rounded-xl transition-all"
+                  >
+                    Generate Entries
+                  </button>
+                </div>
               </div>
-                
-              <div className="bg-gray-800/30 rounded-xl p-4 border border-gray-700/50">
-                <p className="text-sm text-gray-400 mb-1">Operator</p>
-                <p className="text-white font-medium">{selectedEntry.operator_name || 'N/A'}</p>
-                <p className="text-gray-400 text-sm">{selectedEntry.operator?.employee_code || 'N/A'}</p>
-              </div>
-              </div>
-            </div>
-          </div>
-          
-          <div className="pt-4 border-t border-gray-700/50 flex justify-end">
-            <button
-              onClick={() => setShowDetailModal(false)}
-              className="px-4 py-2 text-sm bg-gray-700 hover:bg-gray-600 rounded-xl transition-colors"
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Production Entry Detail Modal */}
+      <AnimatePresence>
+        {showDetailModal && selectedEntry && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/70 backdrop-blur-xl z-50 flex items-center justify-center p-4"
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl border border-gray-700/50 w-full max-w-4xl overflow-hidden"
             >
-              Close
-            </button>
-          </div>
-        </div>
-      </motion.div>
-    </motion.div>
-  )}
-</AnimatePresence>
+              <div className="p-6 border-b border-gray-700/50 flex justify-between items-center">
+                <h3 className="text-xl font-semibold text-white flex items-center">
+                  <ClipboardList className="w-5 h-5 mr-2 text-blue-400" />
+                  Production Entry Details
+                </h3>
+                <button
+                  onClick={() => setShowDetailModal(false)}
+                  className="p-2 rounded-lg hover:bg-gray-700/50 transition-colors"
+                >
+                  <XCircle className="w-5 h-5 text-gray-400" />
+                </button>
+              </div>
+              
+              <div className="p-6 space-y-6">
+                {/* Header with key metrics */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div className="bg-gray-800/30 rounded-xl p-4 border border-gray-700/50">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-gray-400">Produced</p>
+                        <p className="text-2xl font-bold text-emerald-400">{selectedEntry.quantity_produced}</p>
+                      </div>
+                      <div className="p-2 rounded-lg bg-emerald-500/10">
+                        <Package className="w-5 h-5 text-emerald-400" />
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-gray-800/30 rounded-xl p-4 border border-gray-700/50">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-gray-400">Rejected</p>
+                        <p className="text-2xl font-bold text-red-400">{selectedEntry.quantity_rejected || 0}</p>
+                      </div>
+                      <div className="p-2 rounded-lg bg-red-500/10">
+                        <AlertCircle className="w-5 h-5 text-red-400" />
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-gray-800/30 rounded-xl p-4 border border-gray-700/50">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-gray-400">Quality Rate</p>
+                        <p className="text-2xl font-bold text-amber-400">
+                          {selectedEntry.quantity_produced + (selectedEntry.quantity_rejected || 0) > 0 
+                            ? ((selectedEntry.quantity_produced / (selectedEntry.quantity_produced + (selectedEntry.quantity_rejected || 0))) * 100).toFixed(1) + '%'
+                            : 'N/A'
+                          }
+                        </p>
+                      </div>
+                      <div className="p-2 rounded-lg bg-amber-500/10">
+                        <TrendingUp className="w-5 h-5 text-amber-400" />
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-gray-800/30 rounded-xl p-4 border border-gray-700/50">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-gray-400">Downtime</p>
+                        <p className="text-2xl font-bold text-blue-400">{selectedEntry.downtime_minutes || 0} min</p>
+                      </div>
+                      <div className="p-2 rounded-lg bg-blue-500/10">
+                        <Clock className="w-5 h-5 text-blue-400" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <h4 className="text-lg font-medium text-white border-b border-gray-700/50 pb-2 flex items-center">
+                      <CalendarIcon className="w-4 h-4 mr-2 text-blue-400" />
+                      Entry Information
+                    </h4>
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm text-gray-400">Date & Time</p>
+                        <p className="text-white">{formatDateTime(selectedEntry.entry_datetime)}</p>
+                      </div>
+                      
+                      <div>
+                        <p className="text-sm text-gray-400">Shift</p>
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getShiftColor(selectedEntry.shift)}`}>
+                          {selectedEntry.shift?.toUpperCase() || 'N/A'}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    {selectedEntry.downtime_reason && (
+                      <div>
+                        <p className="text-sm text-gray-400">Downtime Reason</p>
+                        <div className="bg-gray-800/50 rounded-xl p-3 mt-1 border border-gray-700/50">
+                          <p className="text-white">{selectedEntry.downtime_reason}</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="space-y-4">
+                    <h4 className="text-lg font-medium text-white border-b border-gray-700/50 pb-2 flex items-center">
+                      <Info className="w-4 h-4 mr-2 text-purple-400" />
+                      Related Information
+                    </h4>
+                    
+                    <div className="grid grid-cols-1 gap-4">
+                    <div className="bg-gray-800/30 rounded-xl p-4 border border-gray-700/50">
+                      <p className="text-sm text-gray-400 mb-1">Work Order</p>
+                      <p className="text-white font-medium">{selectedEntry.work_order_number || 'N/A'}</p>
+                      <p className="text-gray-400 text-sm">{selectedEntry.work_order?.product_name || 'N/A'}</p>
+                    </div>
+                      
+                    <div className="bg-gray-800/30 rounded-xl p-4 border border-gray-700/50">
+                      <p className="text-sm text-gray-400 mb-1">Equipment</p>
+                      <p className="text-white font-medium">{selectedEntry.equipment_name || 'N/A'}</p>
+                      <p className="text-gray-400 text-sm">{selectedEntry.equipment?.equipment_code || 'N/A'}</p>
+                    </div>
+                      
+                    <div className="bg-gray-800/30 rounded-xl p-4 border border-gray-700/50">
+                      <p className="text-sm text-gray-400 mb-1">Operator</p>
+                      <p className="text-white font-medium">{selectedEntry.operator_name || 'N/A'}</p>
+                      <p className="text-gray-400 text-sm">{selectedEntry.operator?.employee_code || 'N/A'}</p>
+                    </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="pt-4 border-t border-gray-700/50 flex justify-end">
+                  <button
+                    onClick={() => setShowDetailModal(false)}
+                    className="px-4 py-2 text-sm bg-gray-700 hover:bg-gray-600 rounded-xl transition-colors"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
